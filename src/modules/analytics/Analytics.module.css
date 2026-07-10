@@ -1,0 +1,107 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Page header ── */
+.pageHeader {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 4px;
+}
+.title { font-size: 20px; font-weight: 700; }
+.sub   { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.refreshBtn {
+  padding: 7px 14px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 13px; font-family: inherit; cursor: pointer;
+  color: var(--text-2); transition: all 0.15s;
+}
+.refreshBtn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── KPI grid ── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.kpiCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card);
+  border-left: 3px solid transparent;
+}
+.kpiLabel { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.kpiValue { font-size: 24px; font-weight: 700; color: var(--text); }
+.kpiSub   { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+.accentGreen { border-left-color: var(--success); }
+.accentRed   { border-left-color: var(--danger); }
+
+/* ── Charts row ── */
+.chartsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.chartCard, .chartCardFull, .tableCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-card);
+}
+.chartTitle {
+  font-size: 13px; font-weight: 700;
+  color: var(--text); margin-bottom: 16px;
+}
+
+/* ── Bar chart ── */
+.barChart { display: flex; flex-direction: column; gap: 12px; }
+.barRow   { display: grid; grid-template-columns: 120px 1fr 40px; align-items: center; gap: 10px; }
+.barLabel { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barTrack { height: 10px; background: var(--border-2); border-radius: 5px; overflow: hidden; }
+.barFill  { height: 100%; border-radius: 5px; transition: width 0.4s ease; }
+.barValue { font-size: 12px; font-weight: 700; color: var(--text); text-align: right; }
+.barSub   { grid-column: 2 / -1; font-size: 10px; color: var(--text-3); margin-top: -6px; }
+
+/* ── Monthly chart ── */
+.monthChart {
+  display: flex; align-items: flex-end; gap: 6px;
+  height: 140px; padding-bottom: 4px;
+}
+.monthCol  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.monthBars { flex: 1; display: flex; align-items: flex-end; gap: 2px; width: 100%; }
+.monthBarWrap { flex: 1; display: flex; align-items: flex-end; height: 100%; }
+.monthBar  { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.4s ease; }
+.monthLabel { font-size: 9px; color: var(--text-3); white-space: nowrap; }
+
+.chartLegend {
+  display: flex; gap: 16px; margin-top: 12px;
+  font-size: 11px; color: var(--text-2);
+}
+.legendDot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+
+/* ── Detail table ── */
+.detailTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.detailTable th {
+  text-align: left; padding: 8px 10px;
+  font-size: 11px; color: var(--text-2);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+.detailTable td { padding: 10px 10px; border-bottom: 1px solid var(--border-2); }
+.detailTable tbody tr:last-child td { border-bottom: none; }
+.rank { font-weight: 700; color: var(--gold); width: 30px; }
+.name { font-weight: 600; }
+
+/* ── States ── */
+.emptyChart  { text-align: center; padding: 32px; color: var(--text-3); font-size: 13px; }
+.centerState { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh; gap: 12px; color: var(--text-2); font-size: 13px; }
+.spinner     { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+  .kpiGrid    { grid-template-columns: 1fr 1fr; }
+  .chartsRow  { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .kpiGrid { grid-template-columns: 1fr; }
+}

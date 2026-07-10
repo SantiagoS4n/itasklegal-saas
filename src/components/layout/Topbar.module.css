@@ -1,0 +1,36 @@
+.topbar {
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.left { display: flex; align-items: center; gap: 14px; }
+
+.title    { font-size: 15px; font-weight: 700; color: var(--text); }
+.subtitle { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+
+.right { display: flex; align-items: center; gap: 12px; }
+
+.roleChip {
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px;
+  background: var(--gold-muted); color: #9a8340;
+}
+
+.menuBtn {
+  display: none;
+  background: none; border: none;
+  font-size: 20px; padding: 4px;
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  .menuBtn { display: flex; }
+}

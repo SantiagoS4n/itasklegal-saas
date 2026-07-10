@@ -1,0 +1,129 @@
+.tableWrap {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  text-align: left;
+  padding: 13px 10px;
+  font-size: 11px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  user-select: none;
+}
+
+td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border-2);
+  vertical-align: middle;
+}
+
+tbody tr:hover { background: #fafafa; }
+tbody tr:hover .stickyCol,
+tbody tr:hover .actCol { background: #fafafa; }
+
+.selected { background: #fcf9ee !important; }
+.selected .stickyCol,
+.selected .actCol { background: #fcf9ee !important; }
+
+/* ── Sticky cols ── */
+.stickyCol {
+  position: sticky; left: 0;
+  background: var(--surface); z-index: 2;
+  border-right: 1px solid var(--border);
+  text-align: center;
+  font-weight: 700; color: var(--gold);
+  cursor: pointer;
+}
+th.stickyCol { background: var(--surface-2); color: var(--text-2); z-index: 3; }
+
+.actCol {
+  position: sticky; right: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  text-align: center; padding: 8px;
+}
+tbody tr:hover .actCol { background: #fafafa; }
+
+/* ── Editable cells ── */
+.editable {
+  padding: 6px 8px; border-radius: 6px;
+  min-width: 110px;
+  background: transparent; border: 1px solid transparent;
+  transition: all 0.18s; font-size: 13px;
+  outline: none;
+}
+.editable:focus {
+  background: var(--surface);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
+}
+.wide  { min-width: 180px; }
+.bold  { font-weight: 600; }
+
+/* ── Inputs inside table ── */
+.dateInput, .selInput {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 8px; font-size: 13px;
+  background: var(--surface); color: var(--text);
+  outline: none; transition: all 0.18s; font-family: inherit;
+}
+.dateInput:focus, .selInput:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
+}
+.dateInput { min-width: 130px; }
+
+/* ── Role colors ── */
+.roleParalegal { background: var(--role-paralegal-bg) !important; border-color: var(--role-paralegal-brd) !important; color: var(--role-paralegal-txt); }
+.roleVA        { background: var(--role-va-bg)        !important; border-color: var(--role-va-brd)        !important; color: var(--role-va-txt); }
+.roleCM        { background: var(--role-cm-bg)        !important; border-color: var(--role-cm-brd)        !important; color: var(--role-cm-txt); }
+
+/* ── Contracted colors ── */
+.contrYes { background: #e8f8ee !important; border-color: #34c759 !important; color: #1e7e34; font-weight: 600; }
+.contrNo  { background: #fff5f5 !important; border-color: #ff3b30 !important; color: #b3241c; font-weight: 600; }
+
+/* ── Links ── */
+.linkCell { text-align: center; }
+.linkCell a { color: var(--blue); font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+.linkCell a:hover { background: rgba(0,122,245,0.06); text-decoration: underline; }
+.noLink { color: var(--text-3); }
+
+/* ── Buttons in table ── */
+.saveBtn {
+  padding: 6px 13px; background: var(--gold); color: white;
+  border: none; border-radius: 7px;
+  font-weight: 600; font-size: 12px; font-family: inherit;
+  transition: background 0.18s; white-space: nowrap;
+}
+.saveBtn:hover { background: var(--gold-dark); }
+.dirty { background: var(--blue) !important; animation: pulse 1.5s infinite; }
+
+.deleteBtn {
+  padding: 6px 9px; background: transparent; color: var(--text-3);
+  border: 1px solid var(--border); border-radius: 7px;
+  font-size: 12px; transition: all 0.15s; font-family: inherit;
+}
+.deleteBtn:hover { border-color: var(--danger); color: var(--danger); background: #fff5f5; }
+
+/* ── State rows ── */
+.stateRow td {
+  text-align: center; padding: 48px;
+  color: var(--text-2); font-size: 13px;
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.82} }

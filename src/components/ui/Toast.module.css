@@ -1,0 +1,23 @@
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 9999;
+  white-space: nowrap;
+  animation: fadeIn 0.2s ease;
+  pointer-events: none;
+}
+
+.success { background: #1d1d1f; color: #fff; }
+.error   { background: #a8071a; color: #fff; }
+.warning { background: #7d4e00; color: #fff; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

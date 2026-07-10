@@ -1,0 +1,8 @@
+.wrap {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 60vh; gap: 12px; text-align: center;
+}
+.icon  { font-size: 52px; }
+.title { font-size: 22px; font-weight: 700; }
+.sub   { font-size: 13px; color: var(--text-2); max-width: 280px; line-height: 1.6; }

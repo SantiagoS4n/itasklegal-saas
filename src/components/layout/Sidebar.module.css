@@ -1,0 +1,162 @@
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100dvh;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease, min-width 0.25s ease;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.collapsed {
+  width: 60px;
+  min-width: 60px;
+}
+
+/* ── Logo ── */
+.logo {
+  padding: 20px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  min-height: 68px;
+  overflow: hidden;
+}
+
+.logoIcon {
+  width: 44px; height: 44px; min-width: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.logoImg {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scale(1.28);
+}
+
+.logoText { overflow: hidden; }
+.logoText span:first-child {
+  display: block;
+  font-size: 14px; font-weight: 700; color: white;
+  white-space: nowrap;
+}
+.logoText span:last-child {
+  display: block;
+  font-size: 10px; color: rgba(255,255,255,0.4);
+  white-space: nowrap; margin-top: 1px;
+}
+.collapsed .logoText { display: none; }
+
+/* ── Nav ── */
+.nav {
+  flex: 1;
+  padding: 10px 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sectionLabel {
+  font-size: 9.5px; font-weight: 600;
+  color: rgba(255,255,255,0.28);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 10px 8px 4px;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.collapsed .sectionLabel { opacity: 0; }
+
+.navItem {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 8px;
+  border-radius: var(--radius);
+  color: rgba(255,255,255,0.5);
+  font-size: 13px; font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap; overflow: hidden;
+  margin-bottom: 1px;
+  text-decoration: none;
+  position: relative;
+  user-select: none;
+}
+.navItem:hover {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+}
+.active {
+  background: rgba(186,167,95,0.18) !important;
+  color: var(--gold) !important;
+}
+
+.navIcon { font-size: 16px; min-width: 20px; text-align: center; }
+.navLabel { transition: opacity 0.2s; }
+.collapsed .navLabel { opacity: 0; width: 0; overflow: hidden; }
+
+.badge {
+  margin-left: auto;
+  background: var(--danger); color: white;
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 20px;
+  transition: opacity 0.2s;
+}
+.collapsed .badge { opacity: 0; }
+
+/* Tooltip collapsed */
+.collapsed .navItem:hover::after {
+  content: attr(data-label);
+  position: absolute; left: 58px; top: 50%; transform: translateY(-50%);
+  background: #333; color: white;
+  font-size: 12px; padding: 4px 10px; border-radius: 6px;
+  white-space: nowrap; pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 999;
+}
+
+/* ── Collapse button ── */
+.collapseBtn {
+  padding: 14px 8px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; gap: 10px;
+  background: none; border-left: none; border-right: none; border-bottom: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 12px; transition: color 0.15s;
+  width: 100%;
+}
+.collapseBtn:hover { color: rgba(255,255,255,0.7); }
+
+.collapseIcon { font-size: 14px; min-width: 20px; text-align: center; transition: transform 0.25s; }
+.flipped { transform: rotate(180deg); }
+.collapseLabel { font-size: 12px; }
+.collapsed .collapseLabel { display: none; }
+
+/* ── User row ── */
+.userRow {
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; gap: 10px;
+  overflow: hidden;
+}
+
+.avatar {
+  width: 32px; height: 32px; min-width: 32px;
+  background: var(--gold); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; color: white;
+}
+
+.userInfo { overflow: hidden; flex: 1; }
+.userName { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.userRole { font-size: 10px; color: rgba(255,255,255,0.4); }
+.collapsed .userInfo { display: none; }
+
+.logoutBtn {
+  background: none; border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 14px; padding: 4px; border-radius: 4px;
+  transition: color 0.15s; flex-shrink: 0;
+}
+.logoutBtn:hover { color: var(--danger); }
+.collapsed .logoutBtn { display: none; }

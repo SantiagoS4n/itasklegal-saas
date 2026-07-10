@@ -1,0 +1,83 @@
+/* ── Spinner ── */
+.spinner {
+  display: inline-block;
+  border: 2px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Button ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  transition: background 0.18s, opacity 0.18s;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-primary { background: var(--gold); color: #fff; }
+.btn-primary:not(:disabled):hover { background: var(--gold-dark); }
+
+.btn-dark { background: var(--text); color: #fff; }
+.btn-dark:not(:disabled):hover { background: #3a3a3c; }
+
+.btn-ghost { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:not(:disabled):hover { background: var(--border-2); }
+
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:not(:disabled):hover { background: #d0302a; }
+
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-md { padding: 9px 18px; font-size: 13px; }
+.btn-lg { padding: 11px 22px; font-size: 14px; }
+
+/* ── Field ── */
+.field { display: flex; flex-direction: column; }
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+  margin-top: 12px;
+}
+
+/* ── Input / Select ── */
+.input, .select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.input:focus, .select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-ring);
+}
+
+/* ── Modal grid ── */
+.modalGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+.modalGrid > * { grid-column: span 1; }
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
