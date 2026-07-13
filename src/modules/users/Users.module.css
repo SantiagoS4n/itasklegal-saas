@@ -1,0 +1,11 @@
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.title  { font-size: 20px; font-weight: 700; }
+.count  { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+.roleBadge {
+  display: inline-block;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+}
+.roleAdmin { background: var(--gold-muted); color: var(--gold-dark); }
+.roleFirm  { background: #e3f2fd; color: #0d47a1; }

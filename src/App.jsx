@@ -10,13 +10,18 @@ import { Invoices }   from '@/modules/invoices/Invoices';
 import { Payments }   from '@/modules/payments/Payments';
 import { BizCards }   from '@/modules/bizcards/BizCards';
 import { Analytics }  from '@/modules/analytics/Analytics';
+import { Users }      from '@/modules/users/Users';
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+// Solo admin puede entrar
+function AdminRoute({ children }) {
+  const { user, profile, loading } = useAuth();
   if (loading) return null;
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (profile?.role !== 'admin') return <Navigate to="/login" replace />;
+  return children;
 }
 
+// Solo usuarios autenticados
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -33,7 +38,7 @@ export default function App() {
         } />
 
         <Route element={
-          <ProtectedRoute><AppLayout /></ProtectedRoute>
+          <AdminRoute><AppLayout /></AdminRoute>
         }>
           <Route index           element={<Home />} />
           <Route path="law-firms"  element={<LawFirms />} />
@@ -42,6 +47,7 @@ export default function App() {
           <Route path="payments"   element={<Payments />} />
           <Route path="biz-cards"  element={<BizCards />} />
           <Route path="analytics"  element={<Analytics />} />
+          <Route path="users"      element={<Users />} />
           <Route path="*"          element={<Navigate to="/" replace />} />
         </Route>
 
