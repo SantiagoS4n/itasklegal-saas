@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_20", "nginx"]
 
 [phases.install]
 cmds = ["npm install"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["npm run build", "cp nginx.conf /etc/nginx/conf.d/default.conf"]
 
 [start]
-cmd = "node_modules/.bin/serve dist --single --listen 3000"
+cmd = "nginx -g 'daemon off;'"
