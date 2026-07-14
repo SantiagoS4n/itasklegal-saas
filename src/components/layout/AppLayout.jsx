@@ -11,13 +11,14 @@ const ToastCtx = createContext(null);
 export const useAppToast = () => useContext(ToastCtx);
 
 const ROUTE_META = {
-  '/':           { title: 'Home',           subtitle: 'iTaskLegal CRM' },
+  '/':           { title: 'Home',           subtitle: 'iTaskLegal' },
   '/law-firms':  { title: 'Law Firms',      subtitle: 'Client firms directory' },
   '/assistants': { title: 'Assistants',     subtitle: 'Manage your legal team' },
   '/invoices':   { title: 'Invoices',       subtitle: 'Billing to law firms' },
   '/payments':   { title: 'Payments',       subtitle: 'Remitly transfers & payroll' },
   '/biz-cards':  { title: 'Business Cards', subtitle: 'Prospects & contacts' },
   '/analytics':  { title: 'Analytics',      subtitle: 'KPIs & performance' },
+  '/users': { title: 'Users', subtitle: 'Manage access' },
 };
 
 export function AppLayout() {

@@ -17,6 +17,7 @@ const NAV = [
   { to: '/payments',   label: 'Payments',        icon: '💸', badge: true },
   { section: 'Reports' },
   { to: '/analytics',  label: 'Analytics',       icon: '📊' },
+  { to: '/users', label: 'Users', icon: '👥' },
 ];
 
 export function Sidebar({ pendingPayments = 0 }) {
@@ -47,7 +48,7 @@ export function Sidebar({ pendingPayments = 0 }) {
         </div>
         <div className={styles.logoText}>
           <span>iTaskLegal</span>
-          <span>CRM Platform</span>
+          <span>SaaS Platform</span>
         </div>
       </div>
 

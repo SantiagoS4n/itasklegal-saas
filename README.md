@@ -1,6 +1,6 @@
-# iTaskLegal CRM
+# iTaskLegal Saas
 
-CRM profesional para iTaskLegal — React + Vite + Supabase.
+Saas profesional para iTaskLegal — React + Vite + Supabase.
 
 ## Requisitos
 - Node.js 18+

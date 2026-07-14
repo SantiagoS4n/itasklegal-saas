@@ -29,7 +29,7 @@ export function Login() {
             <img className={styles.logoImg} src={logo} alt="iTaskLegal logo" />
           </div>
           <div>
-            <div className={styles.logoName}>iTaskLegal CRM</div>
+            <div className={styles.logoName}>iTaskLegal</div>
             <div className={styles.logoSub}>Sign in to continue</div>
           </div>
         </div>
