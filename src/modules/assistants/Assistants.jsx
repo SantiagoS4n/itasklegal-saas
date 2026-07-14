@@ -102,7 +102,7 @@ export function Assistants() {
         <button
           className={`${styles.tab} ${tab === 'pipeline' ? styles.tabActive : ''}`}
           onClick={() => setTab('pipeline')}>
-          🔄 Pipeline
+          🔄 Candidates
           <span className={styles.tabCount}>{pipeline.length}</span>
         </button>
 
@@ -159,7 +159,7 @@ export function Assistants() {
                 <td colSpan={21}>
                   {tab === 'active'
                     ? 'No active assistants yet.'
-                    : 'No assistants in pipeline.'}
+                    : 'No candidates yet.'}
                 </td>
               </tr>
             )}
