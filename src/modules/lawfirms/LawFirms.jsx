@@ -98,7 +98,7 @@ export function LawFirms() {
           <tbody>
             {loading && <TableSkeleton rows={8} cols={7} />}
             {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={7}>No law firms yet.</td></tr>}
-            {!loading {!loading && sorted.map(f =>{!loading && sorted.map(f => pagination.paginated.map(f => (
+            {!loading && pagination.paginated.map(f => (
               <tr key={f.ID_number} data-id={f.ID_number}>
                 <td className={tableStyles.stickyCol}
                   onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>

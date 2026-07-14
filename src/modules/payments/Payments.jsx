@@ -138,7 +138,7 @@ export function Payments() {
                 <td colSpan={12}>{tab === 'unmatched' ? '✓ All payments are matched.' : 'No payments found.'}</td>
               </tr>
             )}
-            {!loading {!loading && sorted.map(p =>{!loading && sorted.map(p => pagination.paginated.map(p => (
+            {!loading && pagination.paginated.map(p => (
               <tr key={p.ID} data-id={p.ID} className={!p.assistant_id ? styles.unmatchedRow : ''}>
                 <td className={tableStyles.stickyCol} onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>{p.ID}</td>
                 <td style={{ whiteSpace:'nowrap' }}>{p.Date || '—'}</td>

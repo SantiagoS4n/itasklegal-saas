@@ -118,7 +118,7 @@ export function BizCards() {
           <tbody>
             {loading && <TableSkeleton rows={8} cols={15} />}
             {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={15}>{search ? 'No results.' : 'No cards yet.'}</td></tr>}
-            {!loading {!loading && sorted.map(c =>{!loading && sorted.map(c => pagination.paginated.map(c => (
+            {!loading && pagination.paginated.map(c => (
               <tr key={c.ID} data-id={c.ID}>
                 <td className={tableStyles.stickyCol} onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>{c.ID}</td>
                 {['full_name','company','job_title','email','phone_office','phone_fax','website','city','state','country','address','notes','source_file'].map(f => (

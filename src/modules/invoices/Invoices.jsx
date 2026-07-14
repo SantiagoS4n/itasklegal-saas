@@ -233,7 +233,7 @@ export function Invoices() {
                 <td colSpan={8}>No invoices found.</td>
               </tr>
             )}
-            {!loading {!loading && displayed.map(inv =>{!loading && displayed.map(inv => pagination.paginated.map(inv => (
+            {!loading && pagination.paginated.map(inv => (
               <tr key={inv.invoice_number} data-id={inv.invoice_number}>
                 <td className={tableStyles.stickyCol}
                   onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>
