@@ -1,3 +1,47 @@
 .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
 .title  { font-size: 20px; font-weight: 700; }
 .count  { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+/* ── Tabs ── */
+.tabRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 16px; border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-2);
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  cursor: pointer; transition: all 0.15s;
+}
+.tab:hover { border-color: var(--gold); color: var(--text); }
+.tabActive {
+  background: var(--gold-muted);
+  border-color: var(--gold);
+  color: var(--gold-dark);
+  font-weight: 600;
+}
+.tabCount {
+  background: var(--border);
+  color: var(--text-2);
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 10px;
+}
+
+/* ── Filtro por firma ── */
+.firmFilter {
+  margin-left: auto;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px; font-family: inherit;
+  background: var(--surface); color: var(--text);
+  outline: none; transition: border-color 0.18s;
+  min-width: 180px;
+}
+.firmFilter:focus { border-color: var(--gold); }

@@ -15,31 +15,41 @@ const EMPTY = {
 };
 
 const ROLE_CLASS = {
-  'Paralegal':        tableStyles.roleParalegal,
+  'Paralegal':         tableStyles.roleParalegal,
   'Virtual Assistant': tableStyles.roleVA,
-  'Case Manager':     tableStyles.roleCM,
+  'Case Manager':      tableStyles.roleCM,
 };
 
 export function Assistants() {
   const toast = useAppToast();
-  const [assistants, setAssistants] = useState([]);
+  const [all,        setAll]        = useState([]);
   const [firms,      setFirms]      = useState([]);
   const [loading,    setLoading]    = useState(true);
+  const [tab,        setTab]        = useState('active');   // active | pipeline
+  const [firmFilter, setFirmFilter] = useState('');         // solo en active
   const [modal,      setModal]      = useState({ open: false, data: null });
 
   const load = async () => {
     setLoading(true);
     const [asRes, fmRes] = await Promise.all([
-      supabase.from('assistant').select('*, law_firm(firm_name)').order('ID'),
+      supabase.from('assistant').select('*, law_firm(firm_name)').order('full_name'),
       supabase.from('law_firm').select('ID_number, firm_name').order('firm_name'),
     ]);
     if (asRes.error) toast('❌ ' + asRes.error.message, 'error');
-    else setAssistants(asRes.data);
+    else setAll(asRes.data);
     if (!fmRes.error) setFirms(fmRes.data);
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
+
+  // Filtrar según tab y firma
+  const active   = all.filter(a => a.contracted === 'Yes');
+  const pipeline = all.filter(a => a.contracted !== 'Yes');
+
+  const displayed = tab === 'active'
+    ? (firmFilter ? active.filter(a => String(a.firm_id) === firmFilter) : active)
+    : pipeline;
 
   const handleSave = async (btn, row) => {
     const id = row.dataset.id;
@@ -49,7 +59,6 @@ export function Assistants() {
       const val = el.value !== undefined ? el.value : el.innerText.replace(/,/g, '').trim();
       payload[f] = val === '' ? null : val;
     });
-    // Validaciones
     if (payload.contracted === 'Yes' && !payload.Id_document) {
       toast('⚠️ Document ID required when contracted is Yes', 'warning'); return;
     }
@@ -57,7 +66,6 @@ export function Assistants() {
       payload[k] = payload[k] ? parseFloat(payload[k]) || null : null;
     });
     payload.firm_id = payload.firm_id || null;
-
     btn.classList.remove(tableStyles.dirty);
     btn.textContent = '…';
     const { error } = await supabase.from('assistant').update(payload).eq('ID', id);
@@ -65,20 +73,54 @@ export function Assistants() {
     toast('✓ Assistant saved');
     btn.textContent = '✓'; btn.style.background = 'var(--success)';
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
+    load();
   };
 
   return (
     <div>
+      {/* Header */}
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Assistants</h1>
-          <p className={styles.count}>{loading ? 'Loading…' : `${assistants.length} assistants`}</p>
+          <p className={styles.count}>
+            {loading ? 'Loading…' : `${active.length} active · ${pipeline.length} in pipeline`}
+          </p>
         </div>
         <Button variant="dark" onClick={() => setModal({ open: true, data: null })}>
           + New Assistant
         </Button>
       </div>
 
+      {/* Tabs */}
+      <div className={styles.tabRow}>
+        <button
+          className={`${styles.tab} ${tab === 'active' ? styles.tabActive : ''}`}
+          onClick={() => setTab('active')}>
+          ✅ Active
+          <span className={styles.tabCount}>{active.length}</span>
+        </button>
+        <button
+          className={`${styles.tab} ${tab === 'pipeline' ? styles.tabActive : ''}`}
+          onClick={() => setTab('pipeline')}>
+          🔄 Pipeline
+          <span className={styles.tabCount}>{pipeline.length}</span>
+        </button>
+
+        {/* Filtro por firma — solo en active */}
+        {tab === 'active' && (
+          <select
+            className={styles.firmFilter}
+            value={firmFilter}
+            onChange={e => setFirmFilter(e.target.value)}>
+            <option value="">All Firms</option>
+            {firms.map(f => (
+              <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Tabla */}
       <div className={tableStyles.tableWrap}>
         <table className={tableStyles.table} style={{ minWidth: 2400 }}>
           <thead>
@@ -107,11 +149,21 @@ export function Assistants() {
             </tr>
           </thead>
           <tbody>
-            {loading && <tr className={tableStyles.stateRow}><td colSpan={21}>Loading assistants…</td></tr>}
-            {!loading && assistants.length === 0 && (
-              <tr className={tableStyles.stateRow}><td colSpan={21}>No assistants yet.</td></tr>
+            {loading && (
+              <tr className={tableStyles.stateRow}>
+                <td colSpan={21}>Loading assistants…</td>
+              </tr>
             )}
-            {!loading && assistants.map(a => {
+            {!loading && displayed.length === 0 && (
+              <tr className={tableStyles.stateRow}>
+                <td colSpan={21}>
+                  {tab === 'active'
+                    ? 'No active assistants yet.'
+                    : 'No assistants in pipeline.'}
+                </td>
+              </tr>
+            )}
+            {!loading && displayed.map(a => {
               const cvUrl   = safeUrl(a.link_CV);
               const firmUrl = safeUrl(a.Firm_agreement);
               const vaUrl   = safeUrl(a.VA_agreement);
@@ -121,16 +173,19 @@ export function Assistants() {
                     onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>
                     {a.ID}
                   </td>
-                  <EditableCell field="Id_document" value={a.Id_document} />
-                  <EditableCell field="full_name" value={a.full_name} bold />
-                  <EditableCell field="phone" value={a.phone} />
-                  <EditableCell field="email" value={a.email} />
-                  <td><input className={tableStyles.dateInput} type="date" data-field="date_of_birth" defaultValue={a.date_of_birth || ''} onChange={e => markDirty(e.target)} /></td>
-                  <EditableCell field="city" value={a.city} />
+                  <EC field="Id_document" value={a.Id_document} />
+                  <EC field="full_name"   value={a.full_name}   bold />
+                  <EC field="phone"       value={a.phone} />
+                  <EC field="email"       value={a.email} />
+                  <td>
+                    <input className={tableStyles.dateInput} type="date"
+                      data-field="date_of_birth" defaultValue={a.date_of_birth || ''}
+                      onChange={e => markDirty(e.target)} />
+                  </td>
+                  <EC field="city" value={a.city} />
                   <td>
                     <select className={`${tableStyles.selInput} ${ROLE_CLASS[a.role] || ''}`}
-                      data-field="role"
-                      defaultValue={a.role || ''}
+                      data-field="role" defaultValue={a.role || ''}
                       onChange={e => {
                         const s = e.target;
                         Object.values(ROLE_CLASS).forEach(c => s.classList.remove(c));
@@ -144,43 +199,56 @@ export function Assistants() {
                     </select>
                   </td>
                   <td className={tableStyles.linkCell}>
-                    {cvUrl ? <a href={cvUrl} target="_blank" rel="noreferrer">View CV</a> : <span className={tableStyles.noLink}>—</span>}
+                    {cvUrl
+                      ? <a href={cvUrl} target="_blank" rel="noreferrer">View CV</a>
+                      : <span className={tableStyles.noLink}>—</span>}
                   </td>
-                  <EditableCell field="Invoice_amount" value={fmtMoney(a.Invoice_amount)} />
-                  <EditableCell field="pay_cop" value={fmtMoney(a.pay_cop)} />
-                  <EditableCell field="pay_usd" value={fmtMoney(a.pay_usd)} />
-                  <td><input className={tableStyles.dateInput} type="date" data-field="start_date" defaultValue={a.start_date || ''} onChange={e => markDirty(e.target)} /></td>
+                  <EC field="Invoice_amount" value={fmtMoney(a.Invoice_amount)} />
+                  <EC field="pay_cop"        value={fmtMoney(a.pay_cop)} />
+                  <EC field="pay_usd"        value={fmtMoney(a.pay_usd)} />
+                  <td>
+                    <input className={tableStyles.dateInput} type="date"
+                      data-field="start_date" defaultValue={a.start_date || ''}
+                      onChange={e => markDirty(e.target)} />
+                  </td>
                   <td>
                     <select className={tableStyles.selInput} data-field="firm_id"
                       defaultValue={a.firm_id || ''}
                       onChange={e => markDirty(e.target)}>
                       <option value="">— Firm —</option>
-                      {firms.map(f => <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>)}
+                      {firms.map(f => (
+                        <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>
+                      ))}
                     </select>
                   </td>
-                  <EditableCell field="hour" value={a.hour ?? ''} />
-                  <EditableCell field="notes" value={a.notes} wide />
-                  <EditableCell field="refer_by" value={a.refer_by} />
+                  <EC field="hour"     value={a.hour ?? ''} />
+                  <EC field="notes"    value={a.notes}      wide />
+                  <EC field="refer_by" value={a.refer_by} />
                   <td>
-                    <select className={`${tableStyles.selInput} ${a.contracted === 'Yes' ? tableStyles.contrYes : tableStyles.contrNo}`}
+                    <select
+                      className={`${tableStyles.selInput} ${a.contracted === 'Yes' ? tableStyles.contrYes : tableStyles.contrNo}`}
                       data-field="contracted"
                       defaultValue={a.contracted || 'No'}
+                      style={{ minWidth: 75, width: 75, textAlign: 'center' }}
                       onChange={e => {
                         const s = e.target;
                         s.classList.toggle(tableStyles.contrYes, s.value === 'Yes');
                         s.classList.toggle(tableStyles.contrNo,  s.value !== 'Yes');
                         markDirty(s);
-                      }}
-                      style={{ minWidth: 75, width: 75, textAlign: 'center' }}>
+                      }}>
                       <option value="Yes">Yes</option>
                       <option value="No">No</option>
                     </select>
                   </td>
                   <td className={tableStyles.linkCell}>
-                    {firmUrl ? <a href={firmUrl} target="_blank" rel="noreferrer">Firm Agr.</a> : <span className={tableStyles.noLink}>—</span>}
+                    {firmUrl
+                      ? <a href={firmUrl} target="_blank" rel="noreferrer">Firm Agr.</a>
+                      : <span className={tableStyles.noLink}>—</span>}
                   </td>
                   <td className={tableStyles.linkCell}>
-                    {vaUrl ? <a href={vaUrl} target="_blank" rel="noreferrer">VA Agr.</a> : <span className={tableStyles.noLink}>—</span>}
+                    {vaUrl
+                      ? <a href={vaUrl} target="_blank" rel="noreferrer">VA Agr.</a>
+                      : <span className={tableStyles.noLink}>—</span>}
                   </td>
                   <td className={tableStyles.actCol}>
                     <button className={tableStyles.saveBtn}
@@ -206,8 +274,7 @@ export function Assistants() {
   );
 }
 
-/* ── Helper: celda editable ── */
-function EditableCell({ field, value, bold, wide }) {
+function EC({ field, value, bold, wide }) {
   const cls = [
     tableStyles.editable,
     bold ? tableStyles.bold : '',
@@ -215,10 +282,8 @@ function EditableCell({ field, value, bold, wide }) {
   ].filter(Boolean).join(' ');
   return (
     <td>
-      <div className={cls}
-        contentEditable suppressContentEditableWarning
-        data-field={field}
-        onInput={e => markDirty(e.target)}>
+      <div className={cls} contentEditable suppressContentEditableWarning
+        data-field={field} onInput={e => markDirty(e.target)}>
         {value ?? ''}
       </div>
     </td>
@@ -229,7 +294,6 @@ function markDirty(el) {
   el.closest('tr')?.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty);
 }
 
-/* ── Modal create/edit ── */
 function AssistantModal({ open, initial, firms, onClose, onSaved }) {
   const toast = useAppToast();
   const [form, setForm] = useState(EMPTY);
@@ -258,7 +322,7 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
     } : EMPTY);
   }, [initial, open]);
 
-  const set = f => e => setForm(prev => ({ ...prev, [f]: e.target.value }));
+  const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
   const submit = async () => {
     if (!form.name && !form.lastName) { toast('⚠️ Name is required', 'warning'); return; }
