@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 import { AppLayout }  from '@/components/layout/AppLayout';
@@ -12,7 +13,27 @@ import { BizCards }   from '@/modules/bizcards/BizCards';
 import { Analytics }  from '@/modules/analytics/Analytics';
 import { Users }      from '@/modules/users/Users';
 
-// Solo admin puede entrar
+// Detecta sesión expirada y redirige al login con mensaje
+function SessionWatcher() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      const wasLoggedIn = sessionStorage.getItem('itl_was_logged_in');
+      if (wasLoggedIn) {
+        sessionStorage.removeItem('itl_was_logged_in');
+        navigate('/login?expired=1', { replace: true });
+      }
+    }
+    if (!loading && user) {
+      sessionStorage.setItem('itl_was_logged_in', '1');
+    }
+  }, [user, loading]);
+
+  return null;
+}
+
 function AdminRoute({ children }) {
   const { user, profile, loading } = useAuth();
   if (loading) return null;
@@ -21,7 +42,6 @@ function AdminRoute({ children }) {
   return children;
 }
 
-// Solo usuarios autenticados
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -31,6 +51,7 @@ function PublicRoute({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <SessionWatcher />
       <Routes>
 
         <Route path="/login" element={

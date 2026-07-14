@@ -5,7 +5,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null);
-  const [profile, setProfile] = useState(null); // { role, firm_id, full_name }
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId) => {
@@ -25,10 +25,22 @@ export function AuthProvider({ children }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) await fetchProfile(session.user.id);
-        else setProfile(null);
+      async (event, session) => {
+        // Sesión expirada o cerrada → limpiar estado
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+          setUser(null);
+          setProfile(null);
+          return;
+        }
+        // Sesión activa o renovada
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setUser(session?.user ?? null);
+          if (session?.user) await fetchProfile(session.user.id);
+        }
+        // Sesión expirada por inactividad
+        if (event === 'USER_UPDATED') {
+          setUser(session?.user ?? null);
+        }
       }
     );
 
@@ -44,7 +56,7 @@ export function AuthProvider({ children }) {
     ?? user?.email?.split('@')[0]
     ?? '';
 
-  const role = profile?.role ?? 'admin';
+  const role   = profile?.role   ?? 'admin';
   const firmId = profile?.firm_id ?? null;
 
   const initials = displayName
@@ -59,7 +71,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user, profile, loading,
       signIn, signOut,
-      displayName, role, firmId, initials
+      displayName, role, firmId, initials,
     }}>
       {children}
     </AuthContext.Provider>

@@ -96,6 +96,12 @@
   font-weight: 600;
 }
 
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable:hover { color: var(--gold); }
+
 @media (max-width: 768px) {
   .kpiRow { grid-template-columns: 1fr 1fr; }
 }

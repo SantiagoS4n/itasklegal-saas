@@ -4,6 +4,8 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { Toast } from '@/components/ui/Toast';
 import { useToast } from '@/hooks/useToast';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useDirty } from '@/context/DirtyContext';
 import styles from './AppLayout.module.css';
 
 import { createContext, useContext } from 'react';
@@ -18,13 +20,15 @@ const ROUTE_META = {
   '/payments':   { title: 'Payments',       subtitle: 'Remitly transfers & payroll' },
   '/biz-cards':  { title: 'Business Cards', subtitle: 'Prospects & contacts' },
   '/analytics':  { title: 'Analytics',      subtitle: 'KPIs & performance' },
-  '/users': { title: 'Users', subtitle: 'Manage access' },
 };
 
 export function AppLayout() {
   const { toast, show } = useToast();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { pathname } = useLocation();
+  const { hasUnsaved } = useDirty();
+
+  useUnsavedChanges(hasUnsaved);
 
   const meta     = ROUTE_META[pathname] ?? { title: 'iTaskLegal', subtitle: '' };
   const title    = meta.title;

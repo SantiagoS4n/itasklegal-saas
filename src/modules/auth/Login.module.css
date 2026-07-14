@@ -11,13 +11,9 @@
 }
 .logo  { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
 .logoIcon {
-  width: 64px; height: 64px; border-radius: 50%;
-  overflow: hidden;
-}
-.logoImg {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  transform: scale(1.28);
+  width: 44px; height: 44px; background: var(--gold); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px; color: white;
 }
 .logoName { font-size: 18px; font-weight: 700; }
 .logoSub  { font-size: 12px; color: var(--text-2); margin-top: 2px; }
@@ -34,6 +30,16 @@
   background: var(--surface); color: var(--text);
 }
 .input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-ring); }
+
+.expiredBanner {
+  margin-top: 12px;
+  padding: 10px 13px;
+  border-radius: var(--radius);
+  background: #fff9e6;
+  border: 1px solid var(--warning);
+  color: #7d4e00;
+  font-size: 13px;
+}
 
 .error {
   margin-top: 12px; padding: 10px 13px; border-radius: var(--radius);

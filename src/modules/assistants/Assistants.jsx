@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { Modal } from '@/components/ui/Modal';
 import { Button, Field, Input, Select, ModalGrid, ModalActions } from '@/components/ui/index';
+import { Pagination } from '@/components/ui/Pagination';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { fmtMoney, safeUrl } from '@/utils/format';
+import { exportToCSV } from '@/utils/exportCSV';
+import { useSort } from '@/hooks/useSort';
+import { usePagination } from '@/hooks/usePagination';
+import { dirtyStore } from '@/context/DirtyContext';
 import tableStyles from '@/styles/table.module.css';
 import styles from './Assistants.module.css';
 
@@ -25,8 +31,9 @@ export function Assistants() {
   const [all,        setAll]        = useState([]);
   const [firms,      setFirms]      = useState([]);
   const [loading,    setLoading]    = useState(true);
-  const [tab,        setTab]        = useState('active');   // active | pipeline
-  const [firmFilter, setFirmFilter] = useState('');         // solo en active
+  const [tab,        setTab]        = useState('active');
+  const [firmFilter, setFirmFilter] = useState('');
+  const [search,     setSearch]     = useState('');
   const [modal,      setModal]      = useState({ open: false, data: null });
 
   const load = async () => {
@@ -43,13 +50,33 @@ export function Assistants() {
 
   useEffect(() => { load(); }, []);
 
-  // Filtrar según tab y firma
+  // 1. Separar por tab
   const active   = all.filter(a => a.contracted === 'Yes');
   const pipeline = all.filter(a => a.contracted !== 'Yes');
+  const byTab    = tab === 'active' ? active : pipeline;
 
-  const displayed = tab === 'active'
-    ? (firmFilter ? active.filter(a => String(a.firm_id) === firmFilter) : active)
-    : pipeline;
+  // 2. Filtrar por firma (solo active)
+  const byFirm = tab === 'active' && firmFilter
+    ? byTab.filter(a => String(a.firm_id) === firmFilter)
+    : byTab;
+
+  // 3. Filtrar por búsqueda
+  const searched = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return byFirm;
+    return byFirm.filter(a =>
+      (a.full_name          || '').toLowerCase().includes(q) ||
+      (a.email              || '').toLowerCase().includes(q) ||
+      (a.phone              || '').toLowerCase().includes(q) ||
+      (a.city               || '').toLowerCase().includes(q) ||
+      (a.role               || '').toLowerCase().includes(q) ||
+      (a.Id_document        || '').toLowerCase().includes(q) ||
+      (a.law_firm?.firm_name|| '').toLowerCase().includes(q)
+    );
+  }, [byFirm, search]);
+
+  // 4. Paginación
+  const pagination = usePagination(searched, 25);
 
   const handleSave = async (btn, row) => {
     const id = row.dataset.id;
@@ -72,6 +99,7 @@ export function Assistants() {
     if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
     toast('✓ Assistant saved');
     btn.textContent = '✓'; btn.style.background = 'var(--success)';
+    dirtyStore.remove('assistant-' + id);
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
     load();
   };
@@ -83,40 +111,71 @@ export function Assistants() {
         <div>
           <h1 className={styles.title}>Assistants</h1>
           <p className={styles.count}>
-            {loading ? 'Loading…' : `${active.length} active · ${pipeline.length} in pipeline`}
+            {loading ? 'Loading…' : `${active.length} active · ${pipeline.length} candidates`}
           </p>
         </div>
-        <Button variant="dark" onClick={() => setModal({ open: true, data: null })}>
-          + New Assistant
-        </Button>
+        <div className={styles.headerActions}>
+          <input
+            className={styles.search}
+            type="text"
+            placeholder="🔍  Search name, email, city, role, firm…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <Button variant="ghost" onClick={() => exportToCSV(
+            searched,
+            [
+              { key: 'ID', label: 'ID' },
+              { key: 'Id_document', label: 'Document' },
+              { key: 'full_name', label: 'Name' },
+              { key: 'phone', label: 'Phone' },
+              { key: 'email', label: 'Email' },
+              { key: 'city', label: 'City' },
+              { key: 'role', label: 'Role' },
+              { key: 'law_firm.firm_name', label: 'Firm' },
+              { key: 'Invoice_amount', label: 'Invoice Amount' },
+              { key: 'pay_cop', label: 'Pay COP' },
+              { key: 'pay_usd', label: 'Pay USD' },
+              { key: 'start_date', label: 'Start Date' },
+              { key: 'hour', label: 'Hours' },
+              { key: 'contracted', label: 'Contracted' },
+              { key: 'refer_by', label: 'Referred By' },
+            ],
+            `assistants_${tab}`
+          )}>
+            ⬇ Export
+          </Button>
+          <Button variant="dark" onClick={() => setModal({ open: true, data: null })}>
+            + New Assistant
+          </Button>
+        </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs + filtro firma */}
       <div className={styles.tabRow}>
         <button
           className={`${styles.tab} ${tab === 'active' ? styles.tabActive : ''}`}
-          onClick={() => setTab('active')}>
+          onClick={() => { setTab('active'); setSearch(''); }}>
           ✅ Active
           <span className={styles.tabCount}>{active.length}</span>
         </button>
         <button
           className={`${styles.tab} ${tab === 'pipeline' ? styles.tabActive : ''}`}
-          onClick={() => setTab('pipeline')}>
+          onClick={() => { setTab('pipeline'); setSearch(''); setFirmFilter(''); }}>
           🔄 Candidates
           <span className={styles.tabCount}>{pipeline.length}</span>
         </button>
-
-        {/* Filtro por firma — solo en active */}
         {tab === 'active' && (
-          <select
-            className={styles.firmFilter}
-            value={firmFilter}
-            onChange={e => setFirmFilter(e.target.value)}>
+          <select className={styles.firmFilter} value={firmFilter} onChange={e => setFirmFilter(e.target.value)}>
             <option value="">All Firms</option>
-            {firms.map(f => (
-              <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>
-            ))}
+            {firms.map(f => <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>)}
           </select>
+        )}
+        {search && (
+          <span className={styles.searchBadge}>
+            {searched.length} result{searched.length !== 1 ? 's' : ''} for "{search}"
+            <button onClick={() => setSearch('')}>✕</button>
+          </span>
         )}
       </div>
 
@@ -149,21 +208,17 @@ export function Assistants() {
             </tr>
           </thead>
           <tbody>
-            {loading && (
-              <tr className={tableStyles.stateRow}>
-                <td colSpan={21}>Loading assistants…</td>
-              </tr>
-            )}
-            {!loading && displayed.length === 0 && (
+            {loading && <TableSkeleton rows={8} cols={21} />}
+            {!loading && searched.length === 0 && (
               <tr className={tableStyles.stateRow}>
                 <td colSpan={21}>
-                  {tab === 'active'
-                    ? 'No active assistants yet.'
-                    : 'No candidates yet.'}
+                  {search
+                    ? `No results for "${search}"`
+                    : tab === 'active' ? 'No active assistants yet.' : 'No candidates yet.'}
                 </td>
               </tr>
             )}
-            {!loading && displayed.map(a => {
+            {!loading && pagination.paginated.map(a => {
               const cvUrl   = safeUrl(a.link_CV);
               const firmUrl = safeUrl(a.Firm_agreement);
               const vaUrl   = safeUrl(a.VA_agreement);
@@ -263,6 +318,8 @@ export function Assistants() {
         </table>
       </div>
 
+      <Pagination {...pagination} />
+
       <AssistantModal
         open={modal.open}
         initial={modal.data}
@@ -291,7 +348,11 @@ function EC({ field, value, bold, wide }) {
 }
 
 function markDirty(el) {
-  el.closest('tr')?.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty);
+  const row = el.closest('tr');
+  if (!row) return;
+  row.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty);
+  const id = row.dataset.id;
+  if (id) dirtyStore.add('assistant-' + id);
 }
 
 function AssistantModal({ open, initial, firms, onClose, onSaved }) {

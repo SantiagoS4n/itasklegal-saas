@@ -81,3 +81,11 @@
   gap: 10px;
   margin-top: 24px;
 }
+
+/* ── Sortable header ── */
+.sortableTh {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.sortableTh:hover { color: var(--gold) !important; background: var(--bg) !important; }

@@ -44,3 +44,16 @@ export function ModalGrid({ children }) {
 export function ModalActions({ children }) {
   return <div className={styles.modalActions}>{children}</div>;
 }
+
+/** Header de tabla ordenable — úsalo con el hook useSort */
+export function SortableTh({ sortKey, icon, onToggle, children, className = '', style = {} }) {
+  return (
+    <th
+      className={`${styles.sortableTh} ${className}`}
+      style={style}
+      onClick={() => onToggle(sortKey)}
+    >
+      {children}{icon(sortKey)}
+    </th>
+  );
+}

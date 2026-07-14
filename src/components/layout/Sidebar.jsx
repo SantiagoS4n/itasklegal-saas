@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useDirty } from '@/context/DirtyContext';
 import styles from './Sidebar.module.css';
-import logo from '@/assets/iTaskLegal.jpeg';
 
 const NAV = [
   { section: 'Main' },
   { to: '/',           label: 'Home',           icon: '🏠' },
+  { to: '/users',      label: 'Users',          icon: '👥' },
   { section: 'People' },
   { to: '/assistants', label: 'Assistants',      icon: '👤' },
   { to: '/biz-cards',  label: 'Business Cards',  icon: '💼' },
@@ -17,12 +18,13 @@ const NAV = [
   { to: '/payments',   label: 'Payments',        icon: '💸', badge: true },
   { section: 'Reports' },
   { to: '/analytics',  label: 'Analytics',       icon: '📊' },
-  { to: '/users', label: 'Users', icon: '👥' },
 ];
 
 export function Sidebar({ pendingPayments = 0 }) {
   const { displayName, role, initials, signOut } = useAuth();
+  const { hasUnsaved, clearAll } = useDirty();
   const navigate = useNavigate();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem('itl_sidebar') === '1'
   );
@@ -34,40 +36,53 @@ export function Sidebar({ pendingPayments = 0 }) {
     });
   };
 
+  // Interceptar navegación si hay cambios sin guardar
+  const handleNavClick = (e, to) => {
+    if (to === location.pathname) return; // misma ruta, no hacer nada
+    if (hasUnsaved) {
+      e.preventDefault();
+      const ok = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave this page? Your changes will be lost.'
+      );
+      if (ok) {
+        clearAll();
+        navigate(to);
+      }
+    }
+  };
+
   const handleLogout = async () => {
+    if (hasUnsaved) {
+      const ok = window.confirm('You have unsaved changes. Sign out anyway?');
+      if (!ok) return;
+    }
+    clearAll();
     await signOut();
     navigate('/login');
   };
 
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
-      {/* Logo */}
       <div className={styles.logo}>
-        <div className={styles.logoIcon}>
-          <img className={styles.logoImg} src={logo} alt="iTaskLegal logo" />
-        </div>
+        <div className={styles.logoIcon}>iT</div>
         <div className={styles.logoText}>
           <span>iTaskLegal</span>
-          <span>SaaS Platform</span>
+          <span>Platform</span>
         </div>
       </div>
 
-      {/* Nav */}
       <nav className={styles.nav}>
         {NAV.map((item, i) => {
           if (item.section) {
-            return (
-              <div key={i} className={styles.sectionLabel}>{item.section}</div>
-            );
+            return <div key={i} className={styles.sectionLabel}>{item.section}</div>;
           }
           return (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === '/'}
-              className={({ isActive }) =>
-                `${styles.navItem} ${isActive ? styles.active : ''}`
-              }
+              onClick={(e) => handleNavClick(e, item.to)}
+              className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
               data-label={item.label}
             >
               <span className={styles.navIcon}>{item.icon}</span>
@@ -80,13 +95,11 @@ export function Sidebar({ pendingPayments = 0 }) {
         })}
       </nav>
 
-      {/* Collapse toggle */}
       <button className={styles.collapseBtn} onClick={toggle}>
         <span className={`${styles.collapseIcon} ${collapsed ? styles.flipped : ''}`}>◀</span>
         <span className={styles.collapseLabel}>Collapse</span>
       </button>
 
-      {/* User */}
       <div className={styles.userRow}>
         <div className={styles.avatar}>{initials}</div>
         <div className={styles.userInfo}>

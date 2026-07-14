@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import styles from './Login.module.css';
-import logo from '@/assets/iTaskLegal.jpeg';
 
 export function Login() {
   const { signIn } = useAuth();
   const navigate   = useNavigate();
+  const [params]   = useSearchParams();
+  const expired    = params.get('expired') === '1';
+
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [error,    setError]    = useState('');
@@ -25,14 +27,18 @@ export function Login() {
     <div className={styles.screen}>
       <form className={styles.card} onSubmit={handleSubmit}>
         <div className={styles.logo}>
-          <div className={styles.logoIcon}>
-            <img className={styles.logoImg} src={logo} alt="iTaskLegal logo" />
-          </div>
+          <div className={styles.logoIcon}>iT</div>
           <div>
             <div className={styles.logoName}>iTaskLegal</div>
             <div className={styles.logoSub}>Sign in to continue</div>
           </div>
         </div>
+
+        {expired && (
+          <div className={styles.expiredBanner}>
+            🔒 Your session expired. Please sign in again.
+          </div>
+        )}
 
         <label className={styles.label} htmlFor="email">Email</label>
         <input id="email" className={styles.input} type="email" value={email}
