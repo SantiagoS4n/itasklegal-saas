@@ -18,12 +18,12 @@
 
 /* ── Logo ── */
 .logo {
-  padding: 20px 16px 16px;
+  padding: 22px 16px 18px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
-  min-height: 68px;
+  min-height: 76px;
   overflow: hidden;
 }
 
@@ -36,9 +36,9 @@
 }
 
 .logoImg {
-  width: 34px; height: 34px; min-width: 34px;
-  border-radius: 9px;
-  object-fit: cover;
+  width: 48px; height: 48px; min-width: 48px;
+  border-radius: 10px;
+  object-fit: contain;
 }
 
 .logoText { overflow: hidden; }
