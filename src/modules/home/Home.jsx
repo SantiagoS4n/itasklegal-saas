@@ -24,17 +24,17 @@ export function Home() {
     ] = await Promise.all([
       supabase.from('assistant').select('ID, contracted'),
       supabase.from('law_firm').select('ID_number'),
-      supabase.from('invoice').select('amount, estado'),
+      supabase.from('invoice').select('amount, status'),
       supabase.from('remitly').select('ID', { count: 'exact' }).is('assistant_id', null),
       supabase.from('invoice')
         .select('invoice_number, amount, invoice_date, law_firm(firm_name)')
-        .eq('estado', 'pendiente')
+        .eq('status', 'pending')
         .lte('invoice_date', in7)
         .gte('invoice_date', today)
         .order('invoice_date')
         .limit(5),
       supabase.from('invoice')
-        .select('amount, estado')
+        .select('amount, status')
         .gte('invoice_date', monthStart),
       supabase.from('remitly')
         .select('"Total USD"')
@@ -52,12 +52,12 @@ export function Home() {
     const unmatched    = remRes.count || 0;
 
     const totalInvoiced  = invoices.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-    const totalPaid      = invoices.filter(i => i.estado === 'pagada').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-    const totalPending   = invoices.filter(i => i.estado === 'pendiente').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-    const totalOverdue   = invoices.filter(i => i.estado === 'vencida').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const totalPaid      = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const totalPending   = invoices.filter(i => i.status === 'pending').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const totalOverdue   = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
 
     const monthBilled    = monthInv.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-    const monthCollected = monthInv.filter(i => i.estado === 'pagada').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const monthCollected = monthInv.filter(i => i.status === 'paid').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     const monthSent      = monthPay.reduce((s, i) => s + (parseFloat(i['Total USD']) || 0), 0);
     const monthMargin    = monthCollected - monthSent;
 

@@ -14,19 +14,19 @@ import styles from './Invoices.module.css';
 
 const EMPTY = {
   invoice_number: '', firm_id: '', start_date: '', end_date: '',
-  invoice_date: '', amount: '', estado: 'pendiente',
+  invoice_date: '', amount: '', status: 'pending',
 };
 
 const ESTADO_CLASS = {
-  pendiente: styles.estadoPendiente,
-  pagada:    styles.estadoPagada,
-  vencida:   styles.estadoVencida,
+  pending: styles.estadoPendiente,
+  paid:    styles.estadoPagada,
+  overdue: styles.estadoVencida,
 };
 
 const ESTADO_LABEL = {
-  pendiente: 'Pending',
-  pagada:    'Paid',
-  vencida:   'Overdue',
+  pending: 'Pending',
+  paid:    'Paid',
+  overdue: 'Overdue',
 };
 
 export function Invoices() {
@@ -92,13 +92,13 @@ export function Invoices() {
 
   // KPIs
   const total     = invoices.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-  const pendiente = invoices.filter(i => i.estado === 'pendiente').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-  const vencida   = invoices.filter(i => i.estado === 'vencida').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-  const pagada    = invoices.filter(i => i.estado === 'pagada').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const pending = invoices.filter(i => i.status === 'pending').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const overdue  = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const paid     = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
 
   // Filter + Sort
   const displayed = useMemo(() => {
-    let rows = filter === 'all' ? invoices : invoices.filter(i => i.estado === filter);
+    let rows = filter === 'all' ? invoices : invoices.filter(i => i.status === filter);
     rows = [...rows].sort((a, b) => {
       let valA = '', valB = '';
       if (sort.key === 'invoice_number') {
@@ -114,9 +114,9 @@ export function Invoices() {
       } else if (sort.key === 'invoice_date') {
         valA = a.invoice_date || '';
         valB = b.invoice_date || '';
-      } else if (sort.key === 'estado') {
-        valA = a.estado || '';
-        valB = b.estado || '';
+      } else if (sort.key === 'status') {
+        valA = a.status || '';
+        valB = b.status || '';
       }
       return sort.dir === 'asc'
         ? valA.localeCompare(valB)
@@ -149,7 +149,7 @@ export function Invoices() {
               { key: 'invoice_number', label: 'Invoice #' },
               { key: 'law_firm.firm_name', label: 'Law Firm' },
               { key: 'amount', label: 'Amount USD' },
-              { key: 'estado', label: 'Status' },
+              { key: 'status', label: 'Status' },
               { key: 'invoice_date', label: 'Invoice Date' },
               { key: 'start_date', label: 'Period Start' },
               { key: 'end_date', label: 'Period End' },
@@ -173,28 +173,28 @@ export function Invoices() {
           </div>
           <div className={`${styles.kpiCard} ${styles.kpiGreen}`}>
             <div className={styles.kpiLabel}>Paid</div>
-            <div className={styles.kpiValue}>${fmtMoney(pagada)}</div>
+            <div className={styles.kpiValue}>${fmtMoney(paid)}</div>
           </div>
           <div className={`${styles.kpiCard} ${styles.kpiYellow}`}>
             <div className={styles.kpiLabel}>Pending</div>
-            <div className={styles.kpiValue}>${fmtMoney(pendiente)}</div>
+            <div className={styles.kpiValue}>${fmtMoney(pending)}</div>
           </div>
           <div className={`${styles.kpiCard} ${styles.kpiRed}`}>
             <div className={styles.kpiLabel}>Overdue</div>
-            <div className={styles.kpiValue}>${fmtMoney(vencida)}</div>
+            <div className={styles.kpiValue}>${fmtMoney(overdue)}</div>
           </div>
         </div>
       )}
 
       {/* Filter tabs */}
       <div className={styles.filterRow}>
-        {['all','pendiente','pagada','vencida'].map(f => (
+        {['all','pending','paid','overdue'].map(f => (
           <button key={f}
             className={`${styles.filterTab} ${filter === f ? styles.filterActive : ''}`}
             onClick={() => setFilter(f)}>
             {f === 'all' ? 'All' : ESTADO_LABEL[f]}
             <span className={styles.filterCount}>
-              {f === 'all' ? invoices.length : invoices.filter(i => i.estado === f).length}
+              {f === 'all' ? invoices.length : invoices.filter(i => i.status === f).length}
             </span>
           </button>
         ))}
@@ -215,8 +215,8 @@ export function Invoices() {
               <th className={styles.sortable} onClick={() => toggleSort('amount')}>
                 Amount (USD){sortIcon('amount')}
               </th>
-              <th className={styles.sortable} onClick={() => toggleSort('estado')}>
-                Status{sortIcon('estado')}
+              <th className={styles.sortable} onClick={() => toggleSort('status')}>
+                Status{sortIcon('status')}
               </th>
               <th className={styles.sortable} onClick={() => toggleSort('invoice_date')}>
                 Invoice Date{sortIcon('invoice_date')}
@@ -257,18 +257,18 @@ export function Invoices() {
                 </td>
                 <td>
                   <select
-                    className={`${tableStyles.selInput} ${ESTADO_CLASS[inv.estado] || ''}`}
-                    data-field="estado"
-                    defaultValue={inv.estado || 'pendiente'}
+                    className={`${tableStyles.selInput} ${ESTADO_CLASS[inv.status] || ''}`}
+                    data-field="status"
+                    defaultValue={inv.status || 'pending'}
                     onChange={e => {
                       const s = e.target;
                       Object.values(ESTADO_CLASS).forEach(c => s.classList.remove(c));
                       s.classList.add(ESTADO_CLASS[s.value] || '');
                       markDirty(s);
                     }}>
-                    <option value="pendiente">Pending</option>
-                    <option value="pagada">Paid</option>
-                    <option value="vencida">Overdue</option>
+                    <option value="pending">Pending</option>
+                    <option value="paid">Paid</option>
+                    <option value="overdue">Overdue</option>
                   </select>
                 </td>
                 <td>
@@ -331,7 +331,7 @@ function InvoiceModal({ open, initial, firms, onClose, onSaved }) {
       end_date:       initial.end_date       || '',
       invoice_date:   initial.invoice_date   || '',
       amount:         initial.amount         ?? '',
-      estado:         initial.estado         || 'pendiente',
+      status:         initial.status         || 'pending',
     } : EMPTY);
   }, [initial, open]);
 
@@ -348,7 +348,7 @@ function InvoiceModal({ open, initial, firms, onClose, onSaved }) {
       end_date:       form.end_date       || null,
       invoice_date:   form.invoice_date   || null,
       amount:         parseFloat(form.amount) || null,
-      estado:         form.estado,
+      status:         form.status,
     };
     const { error } = initial
       ? await supabase.from('invoice').update(payload).eq('invoice_number', initial.invoice_number)
@@ -378,10 +378,10 @@ function InvoiceModal({ open, initial, firms, onClose, onSaved }) {
           <Input type="number" value={form.amount} onChange={set('amount')} placeholder="0.00" />
         </Field>
         <Field label="Status">
-          <Select value={form.estado} onChange={set('estado')}>
-            <option value="pendiente">Pending</option>
-            <option value="pagada">Paid</option>
-            <option value="vencida">Overdue</option>
+          <Select value={form.status} onChange={set('status')}>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
           </Select>
         </Field>
         <Field label="Invoice Date" className="full">
