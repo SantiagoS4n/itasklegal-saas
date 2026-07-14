@@ -35,6 +35,12 @@
   font-weight: 800; font-size: 14px; color: white;
 }
 
+.logoImg {
+  width: 34px; height: 34px; min-width: 34px;
+  border-radius: 9px;
+  object-fit: cover;
+}
+
 .logoText { overflow: hidden; }
 .logoText span:first-child {
   display: block;

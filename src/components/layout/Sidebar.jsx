@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useDirty } from '@/context/DirtyContext';
+import { BRAND } from '@/config/brand';
 import styles from './Sidebar.module.css';
 
 const NAV = [
@@ -64,10 +65,12 @@ export function Sidebar({ pendingPayments = 0 }) {
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
       <div className={styles.logo}>
-        <div className={styles.logoIcon}>iT</div>
+        {BRAND.logoUrl
+          ? <img src={BRAND.logoUrl} alt={BRAND.name} className={styles.logoImg} />
+          : <div className={styles.logoIcon}>{BRAND.logoText}</div>}
         <div className={styles.logoText}>
-          <span>iTaskLegal</span>
-          <span>Platform</span>
+          <span>{BRAND.name}</span>
+          <span>{BRAND.tagline}</span>
         </div>
       </div>
 

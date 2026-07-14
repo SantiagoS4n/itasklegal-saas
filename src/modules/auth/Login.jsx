@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { BRAND } from '@/config/brand';
 import styles from './Login.module.css';
 
 export function Login() {
@@ -27,9 +28,11 @@ export function Login() {
     <div className={styles.screen}>
       <form className={styles.card} onSubmit={handleSubmit}>
         <div className={styles.logo}>
-          <div className={styles.logoIcon}>iT</div>
+          {BRAND.logoUrl
+            ? <img src={BRAND.logoUrl} alt={BRAND.name} className={styles.logoImg} />
+            : <div className={styles.logoIcon}>{BRAND.logoText}</div>}
           <div>
-            <div className={styles.logoName}>iTaskLegal</div>
+            <div className={styles.logoName}>{BRAND.name}</div>
             <div className={styles.logoSub}>Sign in to continue</div>
           </div>
         </div>

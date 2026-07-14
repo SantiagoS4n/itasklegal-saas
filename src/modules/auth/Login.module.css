@@ -15,6 +15,9 @@
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 16px; color: white;
 }
+.logoImg {
+  width: 44px; height: 44px; border-radius: 12px; object-fit: cover;
+}
 .logoName { font-size: 18px; font-weight: 700; }
 .logoSub  { font-size: 12px; color: var(--text-2); margin-top: 2px; }
 

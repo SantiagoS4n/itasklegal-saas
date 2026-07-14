@@ -23,7 +23,7 @@ export function BizCards() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('bussines_card').select('*').order('ID');
+    const { data, error } = await supabase.from('bussinescard').select('*').order('ID');
     if (error) toast('❌ ' + error.message, 'error');
     else setCards(data);
     setLoading(false);
@@ -45,7 +45,7 @@ export function BizCards() {
     row.querySelectorAll('[data-field]').forEach(el => { payload[el.dataset.field] = el.innerText.trim() || null; });
     if (!payload.full_name) { toast('⚠️ Name is required', 'warning'); return; }
     btn.classList.remove(tableStyles.dirty); btn.textContent = '…';
-    const { error } = await supabase.from('bussines_card').update(payload).eq('ID', id);
+    const { error } = await supabase.from('bussinescard').update(payload).eq('ID', id);
     if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
     toast('✓ Card saved'); dirtyStore.remove('card-' + id);
     btn.textContent = '✓'; btn.style.background = 'var(--success)';
@@ -54,7 +54,7 @@ export function BizCards() {
 
   const handleDelete = async (id, name) => {
     if (!confirm(`Delete "${name}"?`)) return;
-    const { error } = await supabase.from('bussines_card').delete().eq('ID', id);
+    const { error } = await supabase.from('bussinescard').delete().eq('ID', id);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
     toast('✓ Card deleted'); load();
   };
@@ -166,8 +166,8 @@ function BizCardModal({ open, initial, onClose, onSaved }) {
     setSaving(true);
     const payload = Object.fromEntries(Object.entries(form).map(([k,v]) => [k, v.trim()||null]));
     const { error } = initial
-      ? await supabase.from('bussines_card').update(payload).eq('ID', initial.ID)
-      : await supabase.from('bussines_card').insert(payload);
+      ? await supabase.from('bussinescard').update(payload).eq('ID', initial.ID)
+      : await supabase.from('bussinescard').insert(payload);
     setSaving(false);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
     toast(initial ? '✓ Card updated' : '✓ Card created');
