@@ -53,18 +53,31 @@ export function BizCards() {
   };
 
   const handleDelete = async (card) => {
-    // Soporta tanto "ID" como "id" según cómo esté la columna en Supabase
     const cardId = card.ID ?? card.id;
-    const cardName = card.full_name || card.company || `Card #${cardId}`;
 
     if (cardId === null || cardId === undefined) {
       toast('❌ Cannot delete: this card has no ID', 'error');
       return;
     }
-    if (!confirm(`Delete "${cardName}"?`)) return;
 
-    const { error } = await supabase.from('bussinescard').delete().eq('ID', cardId);
+    // Mostrar nombre si existe, pero siempre con el ID para claridad
+    const label = card.full_name
+      ? `"${card.full_name}" (card #${cardId})`
+      : `card #${cardId}`;
+
+    if (!confirm(`Delete ${label}?`)) return;
+
+    const { data, error } = await supabase
+      .from('bussinescard')
+      .delete()
+      .eq('ID', cardId)
+      .select();
+
     if (error) { toast('❌ ' + error.message, 'error'); return; }
+    if (!data || data.length === 0) {
+      toast('⚠️ Nothing was deleted — check RLS policy or ID', 'warning');
+      return;
+    }
     toast('✓ Card deleted');
     load();
   };
