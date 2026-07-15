@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button, Field, Input, Select, ModalGrid, ModalActions } from '@/components/ui/index';
 import { fmtMoney } from '@/utils/format';
 import { exportToCSV } from '@/utils/exportCSV';
+import { MonthFilter, filterByMonth } from '@/components/ui/MonthFilter';
 import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/ui/Pagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
@@ -38,6 +39,7 @@ export function Invoices() {
   const [autoModal,   setAutoModal]   = useState(false);
   const [manualModal, setManualModal] = useState(false);
   const [filter,   setFilter]   = useState('all');
+  const [monthFilter, setMonthFilter] = useState('');
   const [sort,     setSort]     = useState({ key: 'invoice_date', dir: 'desc' });
 
   const load = async () => {
@@ -101,6 +103,7 @@ export function Invoices() {
   // Filter + Sort
   const displayed = useMemo(() => {
     let rows = filter === 'all' ? invoices : invoices.filter(i => i.status === filter);
+    rows = filterByMonth(rows, 'invoice_date', monthFilter);
     rows = [...rows].sort((a, b) => {
       let valA = '', valB = '';
       if (sort.key === 'invoice_number') {
@@ -125,7 +128,7 @@ export function Invoices() {
         : valB.localeCompare(valA);
     });
     return rows;
-  }, [invoices, filter, sort]);
+  }, [invoices, filter, monthFilter, sort]);
 
   const pagination = usePagination(displayed, 25);
 
@@ -203,6 +206,9 @@ export function Invoices() {
             </span>
           </button>
         ))}
+        <div style={{ marginLeft: 'auto' }}>
+          <MonthFilter value={monthFilter} onChange={setMonthFilter} />
+        </div>
       </div>
 
       {/* Table */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { fmtMoney } from '@/utils/format';
+import { MonthFilter } from '@/components/ui/MonthFilter';
 import styles from './Analytics.module.css';
 
 export function Analytics() {
@@ -10,12 +11,14 @@ export function Analytics() {
   const [firmData, setFirmData] = useState([]);
   const [selectedFirm, setSelectedFirm] = useState(null);
   const [loading,  setLoading]  = useState(true);
+  const [month,    setMonth]    = useState(''); // '' = todo, 'YYYY-MM' = un mes
 
-  const load = async () => {
+  const load = async (m = month) => {
     setLoading(true);
+    const params = m ? { p_month: m } : {};
     const [globalRes, firmRes] = await Promise.all([
-      supabase.rpc('get_crm_analytics'),
-      supabase.rpc('get_firm_analytics'),
+      supabase.rpc('get_crm_analytics', params),
+      supabase.rpc('get_firm_analytics', params),
     ]);
     if (globalRes.error) { toast('❌ ' + globalRes.error.message, 'error'); setLoading(false); return; }
     setData(globalRes.data);
@@ -23,14 +26,14 @@ export function Analytics() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(month); }, [month]);
 
   if (loading) return <LoadingState />;
-  if (!data)   return <ErrorState onRetry={load} />;
+  if (!data)   return <ErrorState onRetry={() => load()} />;
 
   const { kpis, by_role, by_firm, invoices_by_month, payments_by_month, top_assistants_paid } = data;
 
-  // Margen = facturado pagado - total enviado a asistentes
+  // Margen = facturado pagado - total enviado a asistentes (del período seleccionado)
   const margin     = (kpis.invoiced_paid || 0) - (kpis.total_paid_usd || 0);
   const marginPct  = kpis.invoiced_paid
     ? ((margin / kpis.invoiced_paid) * 100).toFixed(1)
@@ -39,13 +42,18 @@ export function Analytics() {
   return (
     <div className={styles.wrap}>
 
-      {/* ── Título + refresh ── */}
+      {/* ── Título + filtro de mes + refresh ── */}
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title}>Analytics</h1>
-          <p className={styles.sub}>Business overview</p>
+          <p className={styles.sub}>
+            {month ? `Showing: ${monthLabel(month)}` : 'All-time overview'}
+          </p>
         </div>
-        <button className={styles.refreshBtn} onClick={load}>↺ Refresh</button>
+        <div className={styles.headerActions}>
+          <MonthFilter value={month} onChange={setMonth} />
+          <button className={styles.refreshBtn} onClick={() => load()}>↺ Refresh</button>
+        </div>
       </div>
 
       {/* ── KPI Cards — fila 1 ── */}
@@ -111,6 +119,7 @@ export function Analytics() {
             barLabel="Paid"
             barColor="var(--success)"
             prefix="$"
+            highlightMonth={month}
           />
         </div>
       )}
@@ -125,6 +134,7 @@ export function Analytics() {
             barLabel="Sent USD"
             barColor="#007af5"
             prefix="$"
+            highlightMonth={month}
           />
         </div>
       )}
@@ -161,7 +171,9 @@ export function Analytics() {
       {/* ══ Analytics por Firma ══ */}
       {firmData.length > 0 && (
         <div className={styles.tableCard}>
-          <div className={styles.chartTitle}>Performance by Firm</div>
+          <div className={styles.chartTitle}>
+            Performance by Firm {month ? `— ${monthLabel(month)}` : '(all time)'}
+          </div>
           <table className={styles.firmTable}>
             <thead>
               <tr>
@@ -279,7 +291,7 @@ function BarChart({ data = [], color }) {
   );
 }
 
-function MonthlyChart({ data = [], barKey, lineKey, barLabel, lineLabel, barColor, lineColor, prefix = '' }) {
+function MonthlyChart({ data = [], barKey, lineKey, barLabel, lineLabel, barColor, lineColor, prefix = '', highlightMonth = '' }) {
   if (!data.length) return <EmptyChart />;
   const hasLine = !!lineKey;
   const maxBar  = Math.max(...data.map(d => d[barKey]  || 0), 1);
@@ -294,11 +306,15 @@ function MonthlyChart({ data = [], barKey, lineKey, barLabel, lineLabel, barColo
         {data.map(d => {
           const barH  = ((d[barKey]  || 0) / maxBar)  * 100;
           const lineH = hasLine ? ((d[lineKey] || 0) / maxLine) * 100 : 0;
+          const isHighlighted = highlightMonth && d.month_sort === highlightMonth;
           return (
-            <div key={d.month} className={styles.monthCol}>
+            <div key={d.month} className={`${styles.monthCol} ${isHighlighted ? styles.monthColActive : ''}`}>
               <div className={styles.monthBars}>
                 <div className={styles.monthBarWrap} title={`${barLabel}: ${prefix}${fmtMoney(d[barKey])}`}>
-                  <div className={styles.monthBar} style={{ height: `${barH}%`, background: barColor }} />
+                  <div
+                    className={styles.monthBar}
+                    style={{ height: `${barH}%`, background: isHighlighted ? 'var(--gold)' : barColor }}
+                  />
                 </div>
                 {hasLine && (
                   <div className={styles.monthBarWrap} title={`${lineLabel}: ${prefix}${fmtMoney(d[lineKey])}`}>
@@ -306,7 +322,9 @@ function MonthlyChart({ data = [], barKey, lineKey, barLabel, lineLabel, barColo
                   </div>
                 )}
               </div>
-              <div className={styles.monthLabel} title={d.month}>{shortMonth(d.month)}</div>
+              <div className={`${styles.monthLabel} ${isHighlighted ? styles.monthLabelActive : ''}`} title={d.month}>
+                {shortMonth(d.month)}
+              </div>
             </div>
           );
         })}
@@ -314,6 +332,7 @@ function MonthlyChart({ data = [], barKey, lineKey, barLabel, lineLabel, barColo
       <div className={styles.chartLegend}>
         <span><span className={styles.legendDot} style={{ background: barColor }} />{barLabel}</span>
         {hasLine && <span><span className={styles.legendDot} style={{ background: lineColor }} />{lineLabel}</span>}
+        {highlightMonth && <span><span className={styles.legendDot} style={{ background: 'var(--gold)' }} />Selected month</span>}
       </div>
     </div>
   );
@@ -339,4 +358,12 @@ function ErrorState({ onRetry }) {
       <button onClick={onRetry}>Retry</button>
     </div>
   );
+}
+
+// 'YYYY-MM' → 'July 2026'
+function monthLabel(m) {
+  if (!m) return '';
+  const [y, mo] = m.split('-');
+  const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${names[parseInt(mo, 10) - 1]} ${y}`;
 }

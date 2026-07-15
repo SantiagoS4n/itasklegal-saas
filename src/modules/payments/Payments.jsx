@@ -9,6 +9,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { fmtMoney } from '@/utils/format';
 import { exportToCSV } from '@/utils/exportCSV';
+import { MonthFilter, filterByMonth } from '@/components/ui/MonthFilter';
 import tableStyles from '@/styles/table.module.css';
 import styles from './Payments.module.css';
 
@@ -18,6 +19,7 @@ export function Payments() {
   const [assistants, setAssistants] = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [tab,        setTab]        = useState('all');
+  const [monthFilter, setMonthFilter] = useState('');
   const [aliasModal, setAliasModal] = useState(null);
 
   const load = async () => {
@@ -35,7 +37,8 @@ export function Payments() {
   useEffect(() => { load(); }, []);
 
   const pending = payments.filter(p => !p.assistant_id);
-  const base    = tab === 'unmatched' ? pending : payments;
+  const baseTab = tab === 'unmatched' ? pending : payments;
+  const base    = filterByMonth(baseTab, 'Date', monthFilter);
 
   const { sorted, toggle, icon } = useSort(base, 'Date', 'desc');
   const pagination = usePagination(sorted, 25);
@@ -111,6 +114,9 @@ export function Payments() {
         <button className={`${styles.filterTab} ${tab === 'unmatched' ? styles.filterActive : ''}`} onClick={() => setTab('unmatched')}>
           ⚠️ Unmatched <span className={styles.filterCount}>{pending.length}</span>
         </button>
+        <div style={{ marginLeft: 'auto' }}>
+          <MonthFilter value={monthFilter} onChange={setMonthFilter} />
+        </div>
       </div>
 
       <div className={tableStyles.tableWrap}>

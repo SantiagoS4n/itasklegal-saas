@@ -15,6 +15,23 @@
 }
 .refreshBtn:hover { border-color: var(--gold); color: var(--gold); }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Barra resaltada del mes seleccionado ── */
+.monthColActive {
+  background: var(--gold-muted);
+  border-radius: 6px;
+  padding-top: 4px;
+}
+.monthLabelActive {
+  color: var(--gold-dark);
+  font-weight: 700;
+}
+
 /* ── KPI grid ── */
 .kpiGrid {
   display: grid;

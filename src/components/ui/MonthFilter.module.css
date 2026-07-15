@@ -1,0 +1,32 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.18s;
+}
+.input:focus { border-color: var(--gold); }
+
+.clear {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.clear:hover { border-color: var(--danger); color: var(--danger); }
