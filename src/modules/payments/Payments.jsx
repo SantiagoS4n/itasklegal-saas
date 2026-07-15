@@ -21,16 +21,21 @@ export function Payments() {
   const [tab,        setTab]        = useState('all');
   const [monthFilter, setMonthFilter] = useState('');
   const [aliasModal, setAliasModal] = useState(null);
+  const [totalReceived, setTotalReceived] = useState(0);
 
   const load = async () => {
     setLoading(true);
-    const [payRes, asRes] = await Promise.all([
+    const [payRes, asRes, invRes] = await Promise.all([
       supabase.from('remitly').select('*, assistant:assistant_id(full_name)').order('Date', { ascending: false }),
       supabase.from('assistant').select('ID, full_name').order('full_name'),
+      supabase.from('invoice').select('amount').eq('status', 'paid'),
     ]);
     if (payRes.error) toast('❌ ' + payRes.error.message, 'error');
     else setPayments(payRes.data);
     if (!asRes.error) setAssistants(asRes.data);
+    if (!invRes.error) {
+      setTotalReceived((invRes.data || []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0));
+    }
     setLoading(false);
   };
 
@@ -53,7 +58,7 @@ export function Payments() {
   };
 
   const totalUSD  = payments.reduce((s, p) => s + (parseFloat(p['Total USD'])       || 0), 0);
-  const totalRcpt = payments.reduce((s, p) => s + (parseFloat(p['Total Recipient']) || 0), 0);
+  const totalCOP  = payments.reduce((s, p) => s + (parseFloat(p['Total Recipient']) || 0), 0);
   const totalFee  = payments.reduce((s, p) => s + (parseFloat(p['Fee'])             || 0), 0);
 
   return (
@@ -89,15 +94,17 @@ export function Payments() {
           <div className={styles.kpiCard}>
             <div className={styles.kpiLabel}>Total Sent (USD)</div>
             <div className={styles.kpiValue}>${fmtMoney(totalUSD)}</div>
+            <div className={styles.kpiSub}>-${fmtMoney(totalFee)} in fees</div>
           </div>
           <div className={styles.kpiCard}>
-            <div className={styles.kpiLabel}>Total Received</div>
-            <div className={styles.kpiValue}>{fmtMoney(totalRcpt)}</div>
-            <div className={styles.kpiSub}>local currency</div>
+            <div className={styles.kpiLabel}>Total Sent (COP)</div>
+            <div className={styles.kpiValue}>${fmtMoney(totalCOP)}</div>
+            <div className={styles.kpiSub}>to assistants</div>
           </div>
-          <div className={`${styles.kpiCard} ${styles.kpiYellow}`}>
-            <div className={styles.kpiLabel}>Total Fees</div>
-            <div className={styles.kpiValue}>${fmtMoney(totalFee)}</div>
+          <div className={`${styles.kpiCard} ${styles.kpiGreen}`}>
+            <div className={styles.kpiLabel}>Total Received</div>
+            <div className={styles.kpiValue}>${fmtMoney(totalReceived)}</div>
+            <div className={styles.kpiSub}>from law firms</div>
           </div>
           <div className={`${styles.kpiCard} ${pending.length > 0 ? styles.kpiRed : styles.kpiGreen}`}>
             <div className={styles.kpiLabel}>Unmatched</div>

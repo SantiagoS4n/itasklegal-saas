@@ -110,10 +110,7 @@ export function LawFirms() {
                 <td><div className={`${tableStyles.editable} ${tableStyles.wide}`} contentEditable suppressContentEditableWarning data-field="address" onInput={e => { const r = e.target.closest('tr'); r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); }}>{f.address||''}</div></td>
                 <td><div className={`${tableStyles.editable} ${tableStyles.wide}`} contentEditable suppressContentEditableWarning data-field="notes" onInput={e => { const r = e.target.closest('tr'); r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); }}>{f.notes||''}</div></td>
                 <td className={tableStyles.actCol}>
-                  <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
-                    <button className={tableStyles.saveBtn} onClick={e => handleSave(e.currentTarget, e.currentTarget.closest('tr'))}>Save</button>
-                    <button className={tableStyles.deleteBtn} onClick={() => handleDelete(f.ID_number, f.firm_name)}>✕</button>
-                  </div>
+                  <button className={tableStyles.saveBtn} onClick={e => handleSave(e.currentTarget, e.currentTarget.closest('tr'))}>Save</button>
                 </td>
               </tr>
             ))}
