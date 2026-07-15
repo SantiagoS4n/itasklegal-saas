@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { Modal } from '@/components/ui/Modal';
-import { Button, Field, Input, Select, ModalGrid, ModalActions } from '@/components/ui/index';
+import { Button, Field, Input, Select, ModalGrid, ModalActions, SortableTh } from '@/components/ui/index';
+import { useSort } from '@/hooks/useSort';
 import tableStyles from '@/styles/table.module.css';
 import styles from './Users.module.css';
 
@@ -30,6 +31,8 @@ export function Users() {
 
   useEffect(() => { load(); }, []);
 
+  const { sorted, toggle, icon } = useSort(users, 'full_name', 'asc');
+
   const handleDelete = async (id, name) => {
     if (!confirm(`Remove access for "${name}"? This only removes their profile, not their auth account.`)) return;
     const { error } = await supabase.from('user_profile').delete().eq('id', id);
@@ -52,10 +55,10 @@ export function Users() {
         <table className={tableStyles.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Law Firm</th>
-              <th>Created</th>
+              <SortableTh sortKey="full_name"          icon={icon} onToggle={toggle}>Name</SortableTh>
+              <SortableTh sortKey="role"               icon={icon} onToggle={toggle}>Role</SortableTh>
+              <SortableTh sortKey="law_firm.firm_name" icon={icon} onToggle={toggle}>Law Firm</SortableTh>
+              <SortableTh sortKey="created_at"         icon={icon} onToggle={toggle}>Created</SortableTh>
               <th className={tableStyles.actCol}></th>
             </tr>
           </thead>
@@ -65,12 +68,12 @@ export function Users() {
                 <td colSpan={5}>Loading users…</td>
               </tr>
             )}
-            {!loading && users.length === 0 && (
+            {!loading && sorted.length === 0 && (
               <tr className={tableStyles.stateRow}>
                 <td colSpan={5}>No users yet.</td>
               </tr>
             )}
-            {!loading && users.map(u => (
+            {!loading && sorted.map(u => (
               <tr key={u.id}>
                 <td className={tableStyles.bold} style={{ padding: '10px 8px' }}>
                   {u.full_name || '—'}

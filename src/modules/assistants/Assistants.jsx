@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { Modal } from '@/components/ui/Modal';
-import { Button, Field, Input, Select, ModalGrid, ModalActions } from '@/components/ui/index';
+import { Button, Field, Input, Select, ModalGrid, ModalActions, SortableTh } from '@/components/ui/index';
 import { Pagination } from '@/components/ui/Pagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { fmtMoney, safeUrl } from '@/utils/format';
@@ -75,8 +75,11 @@ export function Assistants() {
     );
   }, [byFirm, search]);
 
+  // 4. Ordenar por columna
+  const { sorted, toggle, icon } = useSort(searched, 'full_name', 'asc');
+
   // 4. Paginación
-  const pagination = usePagination(searched, 25);
+  const pagination = usePagination(sorted, 25);
 
   const handleSave = async (btn, row) => {
     const id = row.dataset.id;
@@ -184,24 +187,24 @@ export function Assistants() {
         <table className={tableStyles.table} style={{ minWidth: 2400 }}>
           <thead>
             <tr>
-              <th className={tableStyles.stickyCol}>ID</th>
-              <th>Document</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Birth Date</th>
-              <th>City</th>
-              <th>Role</th>
+              <SortableTh sortKey="ID"            icon={icon} onToggle={toggle} className={tableStyles.stickyCol}>ID</SortableTh>
+              <SortableTh sortKey="Id_document"   icon={icon} onToggle={toggle}>Document</SortableTh>
+              <SortableTh sortKey="full_name"     icon={icon} onToggle={toggle}>Name</SortableTh>
+              <SortableTh sortKey="phone"         icon={icon} onToggle={toggle}>Phone</SortableTh>
+              <SortableTh sortKey="email"         icon={icon} onToggle={toggle}>Email</SortableTh>
+              <SortableTh sortKey="date_of_birth" icon={icon} onToggle={toggle}>Birth Date</SortableTh>
+              <SortableTh sortKey="city"          icon={icon} onToggle={toggle}>City</SortableTh>
+              <SortableTh sortKey="role"          icon={icon} onToggle={toggle}>Role</SortableTh>
               <th style={{ textAlign: 'center' }}>CV</th>
-              <th>Inv. Amt</th>
-              <th>COP</th>
-              <th>USD</th>
-              <th>Start Date</th>
-              <th>Firm</th>
-              <th>Hours</th>
+              <SortableTh sortKey="Invoice_amount" icon={icon} onToggle={toggle}>Inv. Amt</SortableTh>
+              <SortableTh sortKey="pay_cop"       icon={icon} onToggle={toggle}>COP</SortableTh>
+              <SortableTh sortKey="pay_usd"       icon={icon} onToggle={toggle}>USD</SortableTh>
+              <SortableTh sortKey="start_date"    icon={icon} onToggle={toggle}>Start Date</SortableTh>
+              <SortableTh sortKey="law_firm.firm_name" icon={icon} onToggle={toggle}>Firm</SortableTh>
+              <SortableTh sortKey="hour"          icon={icon} onToggle={toggle}>Hours</SortableTh>
               <th>Notes</th>
-              <th>Referred By</th>
-              <th>Contracted</th>
+              <SortableTh sortKey="refer_by"      icon={icon} onToggle={toggle}>Referred By</SortableTh>
+              <SortableTh sortKey="contracted"    icon={icon} onToggle={toggle}>Contracted</SortableTh>
               <th style={{ textAlign: 'center' }}>Firm Agr.</th>
               <th style={{ textAlign: 'center' }}>VA Agr.</th>
               <th className={tableStyles.actCol}></th>

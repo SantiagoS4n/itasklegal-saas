@@ -35,6 +35,8 @@ export function Invoices() {
   const [firms,    setFirms]    = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [modal,    setModal]    = useState({ open: false, data: null });
+  const [autoModal,   setAutoModal]   = useState(false);
+  const [manualModal, setManualModal] = useState(false);
   const [filter,   setFilter]   = useState('all');
   const [sort,     setSort]     = useState({ key: 'invoice_date', dir: 'desc' });
 
@@ -158,7 +160,10 @@ export function Invoices() {
           )}>
             ⬇ Export
           </Button>
-          <Button variant="dark" onClick={() => setModal({ open: true, data: null })}>
+          <Button variant="ghost" onClick={() => setManualModal(true)}>
+            Manual
+          </Button>
+          <Button variant="dark" onClick={() => setAutoModal(true)}>
             + New Invoice
           </Button>
         </div>
@@ -306,6 +311,7 @@ export function Invoices() {
 
       <Pagination {...pagination} />
 
+      {/* Modal de edición (clic en fila existente) */}
       <InvoiceModal
         open={modal.open}
         initial={modal.data}
@@ -313,7 +319,99 @@ export function Invoices() {
         onClose={() => setModal({ open: false, data: null })}
         onSaved={() => { setModal({ open: false, data: null }); load(); }}
       />
+
+      {/* Modal Auto — dispara n8n */}
+      <AutoInvoiceModal
+        open={autoModal}
+        firms={firms}
+        onClose={() => setAutoModal(false)}
+        onDone={() => { setAutoModal(false); load(); }}
+      />
+
+      {/* Modal Manual — crea factura a mano (respaldo) */}
+      <InvoiceModal
+        open={manualModal}
+        initial={null}
+        firms={firms}
+        onClose={() => setManualModal(false)}
+        onSaved={() => { setManualModal(false); load(); }}
+      />
     </div>
+  );
+}
+
+/* ── Modal Auto: dispara el webhook de n8n ── */
+function AutoInvoiceModal({ open, firms, onClose, onDone }) {
+  const toast = useAppToast();
+  const [firmId, setFirmId] = useState('');
+  const [month,  setMonth]  = useState('');
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (open) { setFirmId(''); setMonth(''); }
+  }, [open]);
+
+  const trigger = async () => {
+    if (!firmId) { toast('⚠️ Select a firm', 'warning'); return; }
+
+    const webhookUrl = import.meta.env.VITE_N8N_INVOICE_WEBHOOK;
+    if (!webhookUrl) {
+      toast('❌ Webhook URL not configured (VITE_N8N_INVOICE_WEBHOOK)', 'error');
+      return;
+    }
+
+    setSending(true);
+    const firm = firms.find(f => String(f.ID_number) === String(firmId));
+    try {
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firm_id:   firmId,
+          firm_name: firm?.firm_name || '',
+          month:     month || null,   // opcional
+          triggered_at: new Date().toISOString(),
+        }),
+      });
+      setSending(false);
+      if (!res.ok) {
+        toast(`❌ Webhook responded ${res.status}`, 'error');
+        return;
+      }
+      toast('✓ Invoice generation triggered — n8n is processing');
+      onDone();
+    } catch (err) {
+      setSending(false);
+      toast('❌ Could not reach n8n: ' + err.message, 'error');
+    }
+  };
+
+  return (
+    <Modal open={open} title="Generate Invoice (Automatic)" onClose={onClose} maxWidth={460}>
+      <div className={styles.autoInfo}>
+        This triggers the n8n workflow that generates the invoice automatically
+        using today's date. Select the firm (and optionally a specific month).
+      </div>
+      <ModalGrid>
+        <Field label="Law Firm *" className="full">
+          <Select value={firmId} onChange={e => setFirmId(e.target.value)}>
+            <option value="">— Select firm —</option>
+            {firms.map(f => (
+              <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Month (optional)" className="full">
+          <Input type="month" value={month} onChange={e => setMonth(e.target.value)} />
+        </Field>
+      </ModalGrid>
+      <ModalActions>
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button variant="primary" loading={sending} onClick={trigger}>
+          Generate Invoice
+        </Button>
+      </ModalActions>
+    </Modal>
   );
 }
 

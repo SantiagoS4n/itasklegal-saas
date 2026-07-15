@@ -89,7 +89,7 @@ export function Analytics() {
 
         {/* Asistentes por firma */}
         <div className={styles.chartCard}>
-          <div className={styles.chartTitle}>Assistants by Firm</div>
+          <div className={styles.chartTitle}>Contracted Assistants by Firm</div>
           <BarChart
             data={(by_firm || []).map(r => ({
               label: r.firm_name,
@@ -104,15 +104,12 @@ export function Analytics() {
       {/* ── Invoice trend ── */}
       {invoices_by_month?.length > 0 && (
         <div className={styles.chartCardFull}>
-          <div className={styles.chartTitle}>Monthly Invoicing (last 12 months)</div>
+          <div className={styles.chartTitle}>Monthly Paid Invoices (last 12 months)</div>
           <MonthlyChart
             data={invoices_by_month}
-            barKey="total"
-            lineKey="paid"
-            barLabel="Invoiced"
-            lineLabel="Paid"
-            barColor="var(--gold)"
-            lineColor="var(--success)"
+            barKey="paid"
+            barLabel="Paid"
+            barColor="var(--success)"
             prefix="$"
           />
         </div>
@@ -125,11 +122,8 @@ export function Analytics() {
           <MonthlyChart
             data={payments_by_month}
             barKey="total_usd"
-            lineKey="total_fee"
             barLabel="Sent USD"
-            lineLabel="Fees"
             barColor="#007af5"
-            lineColor="var(--danger)"
             prefix="$"
           />
         </div>
@@ -287,33 +281,39 @@ function BarChart({ data = [], color }) {
 
 function MonthlyChart({ data = [], barKey, lineKey, barLabel, lineLabel, barColor, lineColor, prefix = '' }) {
   if (!data.length) return <EmptyChart />;
+  const hasLine = !!lineKey;
   const maxBar  = Math.max(...data.map(d => d[barKey]  || 0), 1);
-  const maxLine = Math.max(...data.map(d => d[lineKey] || 0), 1);
+  const maxLine = hasLine ? Math.max(...data.map(d => d[lineKey] || 0), 1) : 1;
+
+  // Etiqueta de mes: "Jul 2026" → "Jul"
+  const shortMonth = (m) => (m || '').split(' ')[0];
 
   return (
     <div>
       <div className={styles.monthChart}>
         {data.map(d => {
           const barH  = ((d[barKey]  || 0) / maxBar)  * 100;
-          const lineH = ((d[lineKey] || 0) / maxLine) * 100;
+          const lineH = hasLine ? ((d[lineKey] || 0) / maxLine) * 100 : 0;
           return (
             <div key={d.month} className={styles.monthCol}>
               <div className={styles.monthBars}>
                 <div className={styles.monthBarWrap} title={`${barLabel}: ${prefix}${fmtMoney(d[barKey])}`}>
                   <div className={styles.monthBar} style={{ height: `${barH}%`, background: barColor }} />
                 </div>
-                <div className={styles.monthBarWrap} title={`${lineLabel}: ${prefix}${fmtMoney(d[lineKey])}`}>
-                  <div className={styles.monthBar} style={{ height: `${lineH}%`, background: lineColor, opacity: 0.7 }} />
-                </div>
+                {hasLine && (
+                  <div className={styles.monthBarWrap} title={`${lineLabel}: ${prefix}${fmtMoney(d[lineKey])}`}>
+                    <div className={styles.monthBar} style={{ height: `${lineH}%`, background: lineColor, opacity: 0.7 }} />
+                  </div>
+                )}
               </div>
-              <div className={styles.monthLabel}>{d.month?.slice(5)}</div>
+              <div className={styles.monthLabel} title={d.month}>{shortMonth(d.month)}</div>
             </div>
           );
         })}
       </div>
       <div className={styles.chartLegend}>
         <span><span className={styles.legendDot} style={{ background: barColor }} />{barLabel}</span>
-        <span><span className={styles.legendDot} style={{ background: lineColor }} />{lineLabel}</span>
+        {hasLine && <span><span className={styles.legendDot} style={{ background: lineColor }} />{lineLabel}</span>}
       </div>
     </div>
   );
