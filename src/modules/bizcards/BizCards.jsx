@@ -49,6 +49,7 @@ export function BizCards() {
     if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
     toast('✓ Card saved'); dirtyStore.remove('card-' + id);
     btn.textContent = '✓'; btn.style.background = 'var(--success)';
+    setCards(prev => prev.map(c => String(c.ID) === String(id) ? { ...c, ...payload } : c));
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
   };
 

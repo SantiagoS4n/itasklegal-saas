@@ -104,7 +104,15 @@ export function Assistants() {
     btn.textContent = '✓'; btn.style.background = 'var(--success)';
     dirtyStore.remove('assistant-' + id);
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
-    load();
+
+    // Actualiza solo la fila guardada, sin tocar ediciones sin guardar de otras filas
+    setAll(prev => prev.map(a => {
+      if (String(a.ID) !== String(id)) return a;
+      const updated = { ...a, ...payload };
+      const firm = firms.find(f => String(f.ID_number) === String(payload.firm_id));
+      updated.law_firm = firm ? { firm_name: firm.firm_name } : null;
+      return updated;
+    }));
   };
 
   return (

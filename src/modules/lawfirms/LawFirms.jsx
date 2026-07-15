@@ -45,7 +45,7 @@ export function LawFirms() {
     if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
     toast('✓ Firm saved'); dirtyStore.remove('firm-' + id);
     btn.textContent = '✓'; btn.style.background = 'var(--success)';
-    load();
+    setFirms(prev => prev.map(f => String(f.ID_number) === String(id) ? { ...f, ...payload } : f));
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
   };
 

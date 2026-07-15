@@ -72,8 +72,14 @@ export function Invoices() {
     if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
     toast('✓ Invoice saved'); dirtyStore.remove('invoice-' + id);
     btn.textContent = '✓'; btn.style.background = 'var(--success)';
+    setInvoices(prev => prev.map(inv => {
+      if (String(inv.invoice_number) !== String(id)) return inv;
+      const updated = { ...inv, ...payload };
+      const firm = firms.find(f => String(f.ID_number) === String(payload.firm_id));
+      updated.law_firm = firm ? { firm_name: firm.firm_name } : null;
+      return updated;
+    }));
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
-    load();
   };
 
   const handleDelete = async (id) => {
