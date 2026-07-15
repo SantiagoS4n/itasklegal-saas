@@ -6,14 +6,20 @@ import styles from './Analytics.module.css';
 
 export function Analytics() {
   const toast   = useAppToast();
-  const [data,    setData]    = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data,     setData]     = useState(null);
+  const [firmData, setFirmData] = useState([]);
+  const [selectedFirm, setSelectedFirm] = useState(null);
+  const [loading,  setLoading]  = useState(true);
 
   const load = async () => {
     setLoading(true);
-    const { data: result, error } = await supabase.rpc('get_crm_analytics');
-    if (error) { toast('❌ ' + error.message, 'error'); setLoading(false); return; }
-    setData(result);
+    const [globalRes, firmRes] = await Promise.all([
+      supabase.rpc('get_crm_analytics'),
+      supabase.rpc('get_firm_analytics'),
+    ]);
+    if (globalRes.error) { toast('❌ ' + globalRes.error.message, 'error'); setLoading(false); return; }
+    setData(globalRes.data);
+    if (!firmRes.error) setFirmData(firmRes.data || []);
     setLoading(false);
   };
 
@@ -158,13 +164,89 @@ export function Analytics() {
         </div>
       )}
 
+      {/* ══ Analytics por Firma ══ */}
+      {firmData.length > 0 && (
+        <div className={styles.tableCard}>
+          <div className={styles.chartTitle}>Performance by Firm</div>
+          <table className={styles.firmTable}>
+            <thead>
+              <tr>
+                <th>Firm</th>
+                <th style={{ textAlign: 'center' }}>Active</th>
+                <th style={{ textAlign: 'right' }}>Invoiced</th>
+                <th style={{ textAlign: 'right' }}>Collected</th>
+                <th style={{ textAlign: 'right' }}>Paid Out</th>
+                <th style={{ textAlign: 'right' }}>Margin</th>
+              </tr>
+            </thead>
+            <tbody>
+              {firmData.map(f => {
+                const marginPct = f.invoiced_paid
+                  ? ((f.gross_margin / f.invoiced_paid) * 100).toFixed(0)
+                  : 0;
+                return (
+                  <tr
+                    key={f.firm_id}
+                    className={`${styles.firmRow} ${selectedFirm?.firm_id === f.firm_id ? styles.firmRowActive : ''}`}
+                    onClick={() => setSelectedFirm(selectedFirm?.firm_id === f.firm_id ? null : f)}>
+                    <td className={styles.name}>{f.firm_name}</td>
+                    <td style={{ textAlign: 'center' }}>{f.active_assistants}/{f.total_assistants}</td>
+                    <td style={{ textAlign: 'right' }}>${fmtMoney(f.total_invoiced)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--success)' }}>${fmtMoney(f.invoiced_paid)}</td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-2)' }}>${fmtMoney(f.total_paid_out)}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <strong style={{ color: f.gross_margin >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                        ${fmtMoney(f.gross_margin)}
+                      </strong>
+                      <span className={styles.marginPct}>{marginPct}%</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {/* Detalle de la firma seleccionada */}
+          {selectedFirm && (
+            <div className={styles.firmDetail}>
+              <div className={styles.firmDetailHeader}>
+                <h3>{selectedFirm.firm_name}</h3>
+                <button onClick={() => setSelectedFirm(null)}>✕ Close</button>
+              </div>
+              <div className={styles.firmDetailGrid}>
+                <DetailStat label="Total Assistants" value={selectedFirm.total_assistants} />
+                <DetailStat label="Active" value={selectedFirm.active_assistants} accent="gold" />
+                <DetailStat label="Total Invoiced" value={`$${fmtMoney(selectedFirm.total_invoiced)}`} />
+                <DetailStat label="Collected" value={`$${fmtMoney(selectedFirm.invoiced_paid)}`} accent="success" />
+                <DetailStat label="Pending" value={`$${fmtMoney(selectedFirm.invoiced_pending)}`} accent="warning" />
+                <DetailStat label="Overdue" value={`$${fmtMoney(selectedFirm.invoiced_overdue)}`} accent={selectedFirm.invoiced_overdue > 0 ? 'danger' : 'neutral'} />
+                <DetailStat label="Paid to Assistants" value={`$${fmtMoney(selectedFirm.total_paid_out)}`} />
+                <DetailStat label="Gross Margin" value={`$${fmtMoney(selectedFirm.gross_margin)}`} accent={selectedFirm.gross_margin >= 0 ? 'success' : 'danger'} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
 
-/* ══════════════════════════════════
-   Sub-componentes
-══════════════════════════════════ */
+function DetailStat({ label, value, accent = 'neutral' }) {
+  const accentColor = {
+    neutral: 'var(--text)',
+    gold:    'var(--gold-dark)',
+    success: 'var(--success)',
+    warning: 'var(--warning)',
+    danger:  'var(--danger)',
+  }[accent];
+  return (
+    <div className={styles.detailStat}>
+      <div className={styles.detailLabel}>{label}</div>
+      <div className={styles.detailValue} style={{ color: accentColor }}>{value}</div>
+    </div>
+  );
+}
 
 function KpiCard({ label, value, sub, accent = 'neutral' }) {
   const accentMap = {

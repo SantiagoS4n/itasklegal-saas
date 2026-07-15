@@ -12,6 +12,7 @@ import { Payments }   from '@/modules/payments/Payments';
 import { BizCards }   from '@/modules/bizcards/BizCards';
 import { Analytics }  from '@/modules/analytics/Analytics';
 import { Users }      from '@/modules/users/Users';
+import { Profile }    from '@/modules/profile/Profile';
 
 // Detecta sesión expirada y redirige al login con mensaje
 function SessionWatcher() {
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="biz-cards"  element={<BizCards />} />
           <Route path="analytics"  element={<Analytics />} />
           <Route path="users"      element={<Users />} />
+          <Route path="profile"    element={<Profile />} />
           <Route path="*"          element={<Navigate to="/" replace />} />
         </Route>
 

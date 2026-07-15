@@ -105,3 +105,64 @@
 @media (max-width: 600px) {
   .kpiGrid { grid-template-columns: 1fr; }
 }
+
+/* ── Tabla por firma ── */
+.firmTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.firmTable th {
+  text-align: left; padding: 8px 10px;
+  font-size: 11px; color: var(--text-2);
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+.firmTable td { padding: 11px 10px; border-bottom: 1px solid var(--border-2); }
+.firmRow { cursor: pointer; transition: background 0.15s; }
+.firmRow:hover { background: var(--bg); }
+.firmRowActive { background: var(--gold-muted); }
+.firmRowActive:hover { background: var(--gold-muted); }
+
+.marginPct {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+/* ── Detalle de firma ── */
+.firmDetail {
+  margin-top: 16px;
+  padding: 18px;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+.firmDetailHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.firmDetailHeader h3 { font-size: 15px; font-weight: 700; }
+.firmDetailHeader button {
+  background: none; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 5px 12px;
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  color: var(--text-2); transition: all 0.15s;
+}
+.firmDetailHeader button:hover { border-color: var(--danger); color: var(--danger); }
+
+.firmDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.detailStat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.detailLabel { font-size: 10px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.detailValue { font-size: 18px; font-weight: 700; }
+
+@media (max-width: 900px) {
+  .firmDetailGrid { grid-template-columns: 1fr 1fr; }
+}

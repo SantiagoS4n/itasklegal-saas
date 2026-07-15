@@ -15,13 +15,13 @@ const NAV = [
   { section: 'Clients' },
   { to: '/law-firms',  label: 'Law Firms',       icon: '⚖️' },
   { section: 'Finance' },
-  { to: '/invoices',   label: 'Invoices',        icon: '🧾' },
-  { to: '/payments',   label: 'Payments',        icon: '💸', badge: true },
+  { to: '/invoices',   label: 'Invoices',        icon: '🧾', badgeKey: 'overdueInvoices' },
+  { to: '/payments',   label: 'Payments',        icon: '💸', badgeKey: 'unmatchedPayments' },
   { section: 'Reports' },
   { to: '/analytics',  label: 'Analytics',       icon: '📊' },
 ];
 
-export function Sidebar({ pendingPayments = 0 }) {
+export function Sidebar({ badges = {} }) {
   const { displayName, role, initials, signOut } = useAuth();
   const { hasUnsaved, clearAll } = useDirty();
   const navigate = useNavigate();
@@ -90,8 +90,8 @@ export function Sidebar({ pendingPayments = 0 }) {
             >
               <span className={styles.navIcon}>{item.icon}</span>
               <span className={styles.navLabel}>{item.label}</span>
-              {item.badge && pendingPayments > 0 && (
-                <span className={styles.badge}>{pendingPayments}</span>
+              {item.badgeKey && badges[item.badgeKey] > 0 && (
+                <span className={styles.badge}>{badges[item.badgeKey]}</span>
               )}
             </NavLink>
           );
@@ -104,8 +104,14 @@ export function Sidebar({ pendingPayments = 0 }) {
       </button>
 
       <div className={styles.userRow}>
-        <div className={styles.avatar}>{initials}</div>
-        <div className={styles.userInfo}>
+        <div
+          className={styles.avatar}
+          onClick={() => navigate('/profile')}
+          style={{ cursor: 'pointer' }}
+          title="Edit profile">
+          {initials}
+        </div>
+        <div className={styles.userInfo} onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
           <div className={styles.userName}>{displayName}</div>
           <div className={styles.userRole}>{role}</div>
         </div>

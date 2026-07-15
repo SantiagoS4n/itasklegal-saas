@@ -52,11 +52,21 @@ export function BizCards() {
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
   };
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Delete "${name}"?`)) return;
-    const { error } = await supabase.from('bussinescard').delete().eq('ID', id);
+  const handleDelete = async (card) => {
+    // Soporta tanto "ID" como "id" según cómo esté la columna en Supabase
+    const cardId = card.ID ?? card.id;
+    const cardName = card.full_name || card.company || `Card #${cardId}`;
+
+    if (cardId === null || cardId === undefined) {
+      toast('❌ Cannot delete: this card has no ID', 'error');
+      return;
+    }
+    if (!confirm(`Delete "${cardName}"?`)) return;
+
+    const { error } = await supabase.from('bussinescard').delete().eq('ID', cardId);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
-    toast('✓ Card deleted'); load();
+    toast('✓ Card deleted');
+    load();
   };
 
   const markDirty = el => { const r = el.closest('tr'); if (!r) return; r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('card-' + r.dataset.id); };
@@ -133,7 +143,7 @@ export function BizCards() {
                 <td className={tableStyles.actCol}>
                   <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
                     <button className={tableStyles.saveBtn} onClick={e => handleSave(e.currentTarget, e.currentTarget.closest('tr'))}>Save</button>
-                    <button className={tableStyles.deleteBtn} onClick={() => handleDelete(c.ID, c.full_name)}>✕</button>
+                    <button className={tableStyles.deleteBtn} onClick={() => handleDelete(c)}>✕</button>
                   </div>
                 </td>
               </tr>
