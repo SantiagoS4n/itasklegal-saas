@@ -296,33 +296,49 @@ function MonthlyChart({ data = [], barKey, lineKey, barLabel, lineLabel, barColo
   const hasLine = !!lineKey;
   const maxBar  = Math.max(...data.map(d => d[barKey]  || 0), 1);
   const maxLine = hasLine ? Math.max(...data.map(d => d[lineKey] || 0), 1) : 1;
+  const [hovered, setHovered] = useState(null); // { month, value, x }
 
   // Etiqueta de mes: "Jul 2026" → "Jul"
   const shortMonth = (m) => (m || '').split(' ')[0];
 
   return (
-    <div>
+    <div className={styles.chartRelative}>
+      {hovered && (
+        <div className={styles.tooltip} style={{ left: `${hovered.x}%` }}>
+          <div className={styles.tooltipMonth}>{hovered.month}</div>
+          <div className={styles.tooltipValue}>{prefix}{fmtMoney(hovered.value)}</div>
+          {hovered.value2 !== undefined && (
+            <div className={styles.tooltipValue2}>{lineLabel}: {prefix}{fmtMoney(hovered.value2)}</div>
+          )}
+        </div>
+      )}
       <div className={styles.monthChart}>
-        {data.map(d => {
+        {data.map((d, i) => {
           const barH  = ((d[barKey]  || 0) / maxBar)  * 100;
           const lineH = hasLine ? ((d[lineKey] || 0) / maxLine) * 100 : 0;
           const isHighlighted = highlightMonth && d.month_sort === highlightMonth;
+          const xPct = ((i + 0.5) / data.length) * 100;
           return (
-            <div key={d.month} className={`${styles.monthCol} ${isHighlighted ? styles.monthColActive : ''}`}>
+            <div
+              key={d.month}
+              className={`${styles.monthCol} ${isHighlighted ? styles.monthColActive : ''}`}
+              onMouseEnter={() => setHovered({ month: d.month, value: d[barKey], value2: hasLine ? d[lineKey] : undefined, x: xPct })}
+              onMouseLeave={() => setHovered(null)}
+            >
               <div className={styles.monthBars}>
-                <div className={styles.monthBarWrap} title={`${barLabel}: ${prefix}${fmtMoney(d[barKey])}`}>
+                <div className={styles.monthBarWrap}>
                   <div
                     className={styles.monthBar}
                     style={{ height: `${barH}%`, background: isHighlighted ? 'var(--gold)' : barColor }}
                   />
                 </div>
                 {hasLine && (
-                  <div className={styles.monthBarWrap} title={`${lineLabel}: ${prefix}${fmtMoney(d[lineKey])}`}>
+                  <div className={styles.monthBarWrap}>
                     <div className={styles.monthBar} style={{ height: `${lineH}%`, background: lineColor, opacity: 0.7 }} />
                   </div>
                 )}
               </div>
-              <div className={`${styles.monthLabel} ${isHighlighted ? styles.monthLabelActive : ''}`} title={d.month}>
+              <div className={`${styles.monthLabel} ${isHighlighted ? styles.monthLabelActive : ''}`}>
                 {shortMonth(d.month)}
               </div>
             </div>

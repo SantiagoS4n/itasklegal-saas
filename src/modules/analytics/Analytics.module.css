@@ -80,11 +80,42 @@
 .barSub   { grid-column: 2 / -1; font-size: 10px; color: var(--text-3); margin-top: -6px; }
 
 /* ── Monthly chart ── */
+.chartRelative {
+  position: relative;
+}
+
+.tooltip {
+  position: absolute;
+  top: -8px;
+  transform: translate(-50%, -100%);
+  background: #1a1a1e;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1a1a1e;
+}
+.tooltipMonth { font-weight: 700; margin-bottom: 2px; }
+.tooltipValue { color: #fff; font-weight: 600; }
+.tooltipValue2 { color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 2px; }
+
 .monthChart {
   display: flex; align-items: flex-end; gap: 6px;
   height: 140px; padding-bottom: 4px;
 }
-.monthCol  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.monthCol  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; cursor: pointer; }
 .monthBars { flex: 1; display: flex; align-items: flex-end; gap: 2px; width: 100%; }
 .monthBarWrap { flex: 1; display: flex; align-items: flex-end; height: 100%; }
 .monthBar  { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.4s ease; }
