@@ -105,6 +105,32 @@ export function Assistants() {
     dirtyStore.remove('assistant-' + id);
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
 
+    // Si contracted pasó de No → Yes, disparar generación de agreement en n8n
+    const prevRecord = all.find(a => String(a.ID) === String(id));
+    if (payload.contracted === 'Yes' && prevRecord?.contracted !== 'Yes') {
+      const agreementUrl = import.meta.env.VITE_N8N_AGREEMENT_WEBHOOK;
+      if (agreementUrl) {
+        fetch(agreementUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-webhook-token': import.meta.env.VITE_N8N_WEBHOOK_TOKEN || '',
+          },
+          body: JSON.stringify({
+            assistant_id: id,
+            full_name: payload.full_name || prevRecord?.full_name || '',
+            firm_id: payload.firm_id,
+            triggered_at: new Date().toISOString(),
+          }),
+        })
+          .then(res => {
+            if (res.ok) toast('✓ Agreement generation triggered');
+            else toast(`⚠️ Agreement webhook responded ${res.status}`, 'warning');
+          })
+          .catch(() => toast('⚠️ Could not reach agreement webhook', 'warning'));
+      }
+    }
+
     // Actualiza solo la fila guardada, sin tocar ediciones sin guardar de otras filas
     setAll(prev => prev.map(a => {
       if (String(a.ID) !== String(id)) return a;
