@@ -26,9 +26,13 @@ export default function FormattedNumberInput({
 
   const formatNumber = (num) => {
     if (num === '' || num === null || num === undefined) return '';
-    const clean = num.toString().replace(/[^\d]/g, '');
+    const str = num.toString();
+    const clean = str.replace(/[^\d.]/g, '');
     if (!clean) return '';
-    return new Intl.NumberFormat(locale).format(Number(clean));
+    const [intPart, ...rest] = clean.split('.');
+    const decPart = rest.join('').slice(0, 2); // máx 2 decimales
+    const intFormatted = intPart ? new Intl.NumberFormat(locale).format(Number(intPart)) : '0';
+    return clean.includes('.') ? `${intFormatted}.${decPart}` : intFormatted;
   };
 
   useEffect(() => {
@@ -37,9 +41,12 @@ export default function FormattedNumberInput({
   }, [value, locale]);
 
   const handleChange = (e) => {
-    const raw = e.target.value.replace(/[^\d]/g, '');
+    let raw = e.target.value.replace(/[^\d.]/g, '');
+    // solo permitir un punto decimal
+    const parts = raw.split('.');
+    if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
     setDisplay(formatNumber(raw));
-    onChange(raw ? Number(raw) : 0);
+    onChange(raw === '' || raw === '.' ? 0 : Number(raw));
   };
 
   return (

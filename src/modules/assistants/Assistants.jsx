@@ -395,8 +395,15 @@ function MoneyEC({ field, value, bold, wide }) {
 
   const handleInput = e => {
     const el = e.target;
-    const raw = el.innerText.replace(/[^\d]/g, '');
-    const formatted = raw ? new Intl.NumberFormat('en-US').format(Number(raw)) : '';
+    let raw = el.innerText.replace(/[^\d.]/g, '');
+    const parts = raw.split('.');
+    if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('').slice(0, 2);
+    else if (parts[1]) raw = parts[0] + '.' + parts[1].slice(0, 2);
+
+    const [intPart, decPart] = raw.split('.');
+    const intFormatted = intPart ? new Intl.NumberFormat('en-US').format(Number(intPart)) : '';
+    const formatted = raw.includes('.') ? `${intFormatted || '0'}.${decPart ?? ''}` : intFormatted;
+
     if (el.innerText !== formatted) {
       el.innerText = formatted;
       // mover cursor al final
