@@ -372,12 +372,20 @@ function AutoInvoiceModal({ open, firms, onClose, onDone }) {
       return;
     }
 
+    // DEBUG TEMPORAL — quitar después de confirmar
+    const debugToken = import.meta.env.VITE_N8N_WEBHOOK_TOKEN;
+    console.log('DEBUG token length:', debugToken ? debugToken.length : 'EMPTY/UNDEFINED');
+    toast(`Debug: token ${debugToken ? 'len ' + debugToken.length : 'VACÍO'}`, 'warning');
+
     setSending(true);
     const firm = firms.find(f => String(f.ID_number) === String(firmId));
     try {
       const res = await fetch(webhookUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-webhook-token': import.meta.env.VITE_N8N_WEBHOOK_TOKEN || '',
+        },
         body: JSON.stringify({
           firm_id:   firmId,
           firm_name: firm?.firm_name || '',
