@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { Modal } from '@/components/ui/Modal';
 import { Button, Field, Input, Select, ModalGrid, ModalActions, SortableTh } from '@/components/ui/index';
+import FormattedNumberInput from '@/components/ui/FormattedNumberInput';
 import { Pagination } from '@/components/ui/Pagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { fmtMoney, safeUrl } from '@/utils/format';
@@ -295,9 +296,9 @@ export function Assistants() {
                       ? <a href={cvUrl} target="_blank" rel="noreferrer">View CV</a>
                       : <span className={tableStyles.noLink}>—</span>}
                   </td>
-                  <EC field="Invoice_amount" value={fmtMoney(a.Invoice_amount)} />
-                  <EC field="pay_cop"        value={fmtMoney(a.pay_cop)} />
-                  <EC field="pay_usd"        value={fmtMoney(a.pay_usd)} />
+                  <MoneyEC field="Invoice_amount" value={fmtMoney(a.Invoice_amount)} />
+                  <MoneyEC field="pay_cop"        value={fmtMoney(a.pay_cop)} />
+                  <MoneyEC field="pay_usd"        value={fmtMoney(a.pay_usd)} />
                   <td>
                     <input className={tableStyles.dateInput} type="date"
                       data-field="start_date" defaultValue={a.start_date || ''}
@@ -384,6 +385,41 @@ function EC({ field, value, bold, wide }) {
   );
 }
 
+// Igual que EC, pero reformatea con separadores de miles mientras el usuario escribe.
+function MoneyEC({ field, value, bold, wide }) {
+  const cls = [
+    tableStyles.editable,
+    bold ? tableStyles.bold : '',
+    wide ? tableStyles.wide : '',
+  ].filter(Boolean).join(' ');
+
+  const handleInput = e => {
+    const el = e.target;
+    const raw = el.innerText.replace(/[^\d]/g, '');
+    const formatted = raw ? new Intl.NumberFormat('en-US').format(Number(raw)) : '';
+    if (el.innerText !== formatted) {
+      el.innerText = formatted;
+      // mover cursor al final
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    markDirty(el);
+  };
+
+  return (
+    <td>
+      <div className={cls} contentEditable suppressContentEditableWarning
+        data-field={field} onInput={handleInput}>
+        {value ?? ''}
+      </div>
+    </td>
+  );
+}
+
 function markDirty(el) {
   const row = el.closest('tr');
   if (!row) return;
@@ -421,6 +457,7 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
   }, [initial, open]);
 
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
+  const setNum = f => val => setForm(p => ({ ...p, [f]: val }));
 
   const submit = async () => {
     if (!form.name && !form.lastName) { toast('⚠️ Name is required', 'warning'); return; }
@@ -487,13 +524,13 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
           <Input type="date" value={form.start_date} onChange={set('start_date')} />
         </Field>
         <Field label="Invoice Amt (USD)">
-          <Input type="number" value={form.Invoice_amount} onChange={set('Invoice_amount')} placeholder="0" />
+          <FormattedNumberInput value={form.Invoice_amount} onChange={setNum('Invoice_amount')} prefix="US$" placeholder="0" />
         </Field>
         <Field label="Pay COP">
-          <Input type="number" value={form.pay_cop} onChange={set('pay_cop')} placeholder="0" />
+          <FormattedNumberInput value={form.pay_cop} onChange={setNum('pay_cop')} prefix="$" placeholder="0" />
         </Field>
         <Field label="Pay USD">
-          <Input type="number" value={form.pay_usd} onChange={set('pay_usd')} placeholder="0" />
+          <FormattedNumberInput value={form.pay_usd} onChange={setNum('pay_usd')} prefix="US$" placeholder="0" />
         </Field>
         <Field label="Hours / Week">
           <Input type="number" value={form.hour} onChange={set('hour')} placeholder="40" />
