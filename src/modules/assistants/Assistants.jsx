@@ -90,8 +90,25 @@ export function Assistants() {
       const val = el.value !== undefined ? el.value : el.innerText.replace(/,/g, '').trim();
       payload[f] = val === '' ? null : val;
     });
-    if (payload.contracted === 'Yes' && !payload.Id_document) {
-      toast('⚠️ Document ID required when contracted is Yes', 'warning'); return;
+    if (payload.contracted === 'Yes') {
+      const REQUIRED = [
+        ['Id_document',    'Document ID'],
+        ['full_name',      'Full Name'],
+        ['email',          'Email'],
+        ['phone',          'Phone'],
+        ['role',           'Role'],
+        ['start_date',     'Start Date'],
+        ['Invoice_amount', 'Invoice Amount'],
+        ['pay_cop',        'Pay COP'],
+        ['pay_usd',        'Pay USD'],
+        ['firm_id',        'Firm'],
+        ['hour',           'Hours'],
+      ];
+      const missing = REQUIRED.filter(([f]) => !payload[f]).map(([, label]) => label);
+      if (missing.length) {
+        toast(`⚠️ Required when contracted is Yes: ${missing.join(', ')}`, 'warning');
+        return;
+      }
     }
     ['Invoice_amount','pay_cop','pay_usd','hour'].forEach(k => {
       payload[k] = payload[k] ? parseFloat(payload[k]) || null : null;
@@ -468,6 +485,27 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
 
   const submit = async () => {
     if (!form.name && !form.lastName) { toast('⚠️ Name is required', 'warning'); return; }
+
+    if (form.contracted === 'Yes') {
+      const REQUIRED = [
+        ['Id_document',    'Document ID'],
+        ['email',          'Email'],
+        ['phone',          'Phone'],
+        ['role',           'Role'],
+        ['start_date',     'Start Date'],
+        ['Invoice_amount', 'Invoice Amount'],
+        ['pay_cop',        'Pay COP'],
+        ['pay_usd',        'Pay USD'],
+        ['firm_id',        'Firm'],
+        ['hour',           'Hours'],
+      ];
+      const missing = REQUIRED.filter(([f]) => !form[f]).map(([, label]) => label);
+      if (missing.length) {
+        toast(`⚠️ Required when contracted is Yes: ${missing.join(', ')}`, 'warning');
+        return;
+      }
+    }
+
     setSaving(true);
     const payload = {
       ...form,
