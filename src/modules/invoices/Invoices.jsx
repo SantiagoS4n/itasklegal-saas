@@ -10,7 +10,6 @@ import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/ui/Pagination';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import tableStyles from '@/styles/table.module.css';
-import { dirtyStore } from '@/context/DirtyContext';
 import styles from './Invoices.module.css';
 
 const EMPTY = {
@@ -41,6 +40,7 @@ export function Invoices() {
   const [filter,   setFilter]   = useState('all');
   const [monthFilter, setMonthFilter] = useState('');
   const [sort,     setSort]     = useState({ key: 'invoice_date', dir: 'desc' });
+  const [savingId, setSavingId] = useState(null); // invoice_number que se está guardando (feedback visual)
 
   const load = async () => {
     setLoading(true);
@@ -58,28 +58,21 @@ export function Invoices() {
 
   useEffect(() => { load(); }, []);
 
-  const handleSave = async (btn, row) => {
-    const id = row.dataset.id;
-    const payload = {};
-    row.querySelectorAll('[data-field]').forEach(el => {
-      const val = el.value !== undefined ? el.value : el.innerText.trim();
-      payload[el.dataset.field] = val || null;
-    });
-    payload.amount = payload.amount ? parseFloat(payload.amount) : null;
-    btn.classList.remove(tableStyles.dirty);
-    btn.textContent = '…';
-    const { error } = await supabase.from('invoice').update(payload).eq('invoice_number', id);
-    if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
-    toast('✓ Invoice saved'); dirtyStore.remove('invoice-' + id);
-    btn.textContent = '✓'; btn.style.background = 'var(--success)';
-    setInvoices(prev => prev.map(inv => {
-      if (String(inv.invoice_number) !== String(id)) return inv;
-      const updated = { ...inv, ...payload };
-      const firm = firms.find(f => String(f.ID_number) === String(payload.firm_id));
-      updated.law_firm = firm ? { firm_name: firm.firm_name } : null;
-      return updated;
-    }));
-    setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
+  // Autosave: se dispara al cambiar el select de Status. Solo ese campo se actualiza.
+  const handleStatusChange = async (invoiceNumber, newStatus) => {
+    setSavingId(invoiceNumber);
+    const { error } = await supabase
+      .from('invoice')
+      .update({ status: newStatus })
+      .eq('invoice_number', invoiceNumber);
+    setSavingId(null);
+    if (error) { toast('❌ ' + error.message, 'error'); return; }
+    toast('✓ Status updated');
+    setInvoices(prev => prev.map(inv =>
+      String(inv.invoice_number) === String(invoiceNumber)
+        ? { ...inv, status: newStatus }
+        : inv
+    ));
   };
 
   const handleDelete = async (id) => {
@@ -101,10 +94,10 @@ export function Invoices() {
   };
 
   // KPIs
-  const total     = invoices.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const total   = invoices.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
   const pending = invoices.filter(i => i.status === 'pending').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-  const overdue  = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-  const paid     = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const overdue = invoices.filter(i => i.status === 'overdue').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const paid    = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
 
   // Filter + Sort
   const displayed = useMemo(() => {
@@ -137,13 +130,6 @@ export function Invoices() {
   }, [invoices, filter, monthFilter, sort]);
 
   const pagination = usePagination(displayed, 25);
-
-  const markDirty = el => {
-    const r = el.closest('tr');
-    if (!r) return;
-    r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty);
-    dirtyStore.add('invoice-' + r.dataset.id);
-  };
 
   return (
     <div>
@@ -202,7 +188,7 @@ export function Invoices() {
 
       {/* Filter tabs */}
       <div className={styles.filterRow}>
-        {['all','pending','paid','overdue'].map(f => (
+        {['all', 'pending', 'paid', 'overdue'].map(f => (
           <button key={f}
             className={`${styles.filterTab} ${filter === f ? styles.filterActive : ''}`}
             onClick={() => setFilter(f)}>
@@ -252,63 +238,40 @@ export function Invoices() {
             )}
             {!loading && pagination.paginated.map(inv => (
               <tr key={inv.invoice_number} data-id={inv.invoice_number}>
-                <td className={tableStyles.stickyCol}
-                  onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>
+                <td className={tableStyles.stickyCol}>
                   {inv.invoice_number}
                 </td>
-                <td>
-                  <select className={tableStyles.selInput} data-field="firm_id"
-                    defaultValue={inv.firm_id || ''}
-                    onChange={e => markDirty(e.target)}>
-                    <option value="">— Firm —</option>
-                    {firms.map(f => (
-                      <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <div className={tableStyles.editable} contentEditable suppressContentEditableWarning
-                    data-field="amount" onInput={e => markDirty(e.target)}>
-                    {inv.amount ?? ''}
-                  </div>
-                </td>
+
+                {/* Firm — solo lectura */}
+                <td>{inv.law_firm?.firm_name || '—'}</td>
+
+                {/* Amount — solo lectura */}
+                <td>{inv.amount != null ? `$${fmtMoney(inv.amount)}` : '—'}</td>
+
+                {/* Status — único campo editable, autosave on change */}
                 <td>
                   <select
                     className={`${tableStyles.selInput} ${ESTADO_CLASS[inv.status] || ''}`}
-                    data-field="status"
-                    defaultValue={inv.status || 'pending'}
-                    onChange={e => {
-                      const s = e.target;
-                      Object.values(ESTADO_CLASS).forEach(c => s.classList.remove(c));
-                      s.classList.add(ESTADO_CLASS[s.value] || '');
-                      markDirty(s);
-                    }}>
+                    value={inv.status || 'pending'}
+                    disabled={savingId === inv.invoice_number}
+                    onChange={e => handleStatusChange(inv.invoice_number, e.target.value)}>
                     <option value="pending">Pending</option>
                     <option value="paid">Paid</option>
                     <option value="overdue">Overdue</option>
                   </select>
                 </td>
-                <td>
-                  <input className={tableStyles.dateInput} type="date" data-field="invoice_date"
-                    defaultValue={inv.invoice_date || ''}
-                    onChange={e => markDirty(e.target)} />
-                </td>
-                <td>
-                  <input className={tableStyles.dateInput} type="date" data-field="start_date"
-                    defaultValue={inv.start_date || ''}
-                    onChange={e => markDirty(e.target)} />
-                </td>
-                <td>
-                  <input className={tableStyles.dateInput} type="date" data-field="end_date"
-                    defaultValue={inv.end_date || ''}
-                    onChange={e => markDirty(e.target)} />
-                </td>
+
+                {/* Invoice Date — solo lectura */}
+                <td>{inv.invoice_date || '—'}</td>
+
+                {/* Period Start — solo lectura */}
+                <td>{inv.start_date || '—'}</td>
+
+                {/* Period End — solo lectura */}
+                <td>{inv.end_date || '—'}</td>
+
                 <td className={tableStyles.actCol}>
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                    <button className={tableStyles.saveBtn}
-                      onClick={e => handleSave(e.currentTarget, e.currentTarget.closest('tr'))}>
-                      Save
-                    </button>
                     <button className={tableStyles.deleteBtn}
                       onClick={() => handleDelete(inv.invoice_number)}>
                       ✕
@@ -322,15 +285,6 @@ export function Invoices() {
       </div>
 
       <Pagination {...pagination} />
-
-      {/* Modal de edición (clic en fila existente) */}
-      <InvoiceModal
-        open={modal.open}
-        initial={modal.data}
-        firms={firms}
-        onClose={() => setModal({ open: false, data: null })}
-        onSaved={() => { setModal({ open: false, data: null }); load(); }}
-      />
 
       {/* Modal Auto — dispara n8n */}
       <AutoInvoiceModal
@@ -384,7 +338,7 @@ function AutoInvoiceModal({ open, firms, onClose, onDone }) {
         body: JSON.stringify({
           firm_id:   firmId,
           firm_name: firm?.firm_name || '',
-          month:     month || null,   // opcional
+          month:     month || null,
           triggered_at: new Date().toISOString(),
         }),
       });
@@ -430,6 +384,7 @@ function AutoInvoiceModal({ open, firms, onClose, onDone }) {
   );
 }
 
+/* ── Modal Manual: crea factura a mano (todos los campos editables solo aquí) ── */
 function InvoiceModal({ open, initial, firms, onClose, onSaved }) {
   const toast = useAppToast();
   const [form, setForm] = useState(EMPTY);
