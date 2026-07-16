@@ -99,12 +99,11 @@ export function Assistants() {
         ['role',           'Role'],
         ['start_date',     'Start Date'],
         ['Invoice_amount', 'Invoice Amount'],
-        ['pay_cop',        'Pay COP'],
-        ['pay_usd',        'Pay USD'],
         ['firm_id',        'Firm'],
         ['hour',           'Hours'],
       ];
       const missing = REQUIRED.filter(([f]) => !payload[f]).map(([, label]) => label);
+      if (!payload.pay_cop && !payload.pay_usd) missing.push('Pay COP or Pay USD');
       if (missing.length) {
         toast(`⚠️ Required when contracted is Yes: ${missing.join(', ')}`, 'warning');
         return;
@@ -494,12 +493,11 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
         ['role',           'Role'],
         ['start_date',     'Start Date'],
         ['Invoice_amount', 'Invoice Amount'],
-        ['pay_cop',        'Pay COP'],
-        ['pay_usd',        'Pay USD'],
         ['firm_id',        'Firm'],
         ['hour',           'Hours'],
       ];
       const missing = REQUIRED.filter(([f]) => !form[f]).map(([, label]) => label);
+      if (!form.pay_cop && !form.pay_usd) missing.push('Pay COP or Pay USD');
       if (missing.length) {
         toast(`⚠️ Required when contracted is Yes: ${missing.join(', ')}`, 'warning');
         return;
