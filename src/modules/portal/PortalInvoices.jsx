@@ -51,7 +51,7 @@ export function PortalInvoices() {
     <div>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Your Invoices</h1>
+          <h1 className={styles.title}>Invoices</h1>
           <p className={styles.count}>{loading ? 'Loading…' : `${sorted.length} invoices`}</p>
         </div>
         <Button variant="ghost" onClick={() => exportToCSV(
@@ -63,6 +63,7 @@ export function PortalInvoices() {
             { key: 'invoice_date', label: 'Invoice Date' },
             { key: 'start_date', label: 'Period Start' },
             { key: 'end_date', label: 'Period End' },
+            { key: 'pdf_url', label: 'PDF Link' },
           ],
           'my_invoices'
         )}>
@@ -114,13 +115,14 @@ export function PortalInvoices() {
               <SortableTh sortKey="invoice_date"   icon={icon} onToggle={toggle}>Invoice Date</SortableTh>
               <th>Period Start</th>
               <th>Period End</th>
+              <th style={{ textAlign: 'center' }}>PDF</th>
             </tr>
           </thead>
           <tbody>
-            {loading && <TableSkeleton rows={5} cols={6} />}
+            {loading && <TableSkeleton rows={5} cols={7} />}
             {!loading && sorted.length === 0 && (
               <tr className={tableStyles.stateRow}>
-                <td colSpan={6}>No invoices found.</td>
+                <td colSpan={7}>No invoices found.</td>
               </tr>
             )}
             {!loading && pagination.paginated.map(inv => (
@@ -135,6 +137,11 @@ export function PortalInvoices() {
                 <td>{inv.invoice_date || '—'}</td>
                 <td>{inv.start_date || '—'}</td>
                 <td>{inv.end_date || '—'}</td>
+                <td style={{ textAlign: 'center' }}>
+                  {inv.pdf_url
+                    ? <a href={inv.pdf_url} target="_blank" rel="noreferrer" className={styles.pdfLink}>⬇ PDF</a>
+                    : <span style={{ color: 'var(--text-3)' }}>—</span>}
+                </td>
               </tr>
             ))}
           </tbody>

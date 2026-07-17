@@ -42,7 +42,7 @@ export function PortalAssistants() {
     <div>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Your Assistants</h1>
+          <h1 className={styles.title}>Assistants</h1>
           <p className={styles.count}>{loading ? 'Loading…' : `${assistants.length} active`}</p>
         </div>
       </div>

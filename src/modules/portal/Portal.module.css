@@ -29,6 +29,19 @@
 .estadoPagada    { background: #e8f8ee; border-color: var(--success); color: #1e7e34; }
 .estadoVencida   { background: #fff5f5; border-color: var(--danger);  color: #b3241c; }
 
+.pdfLink {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--gold-muted);
+  color: var(--gold-dark);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.pdfLink:hover { background: var(--gold); color: white; }
+
 @media (max-width: 768px) {
   .kpiRow { grid-template-columns: 1fr 1fr; }
 }

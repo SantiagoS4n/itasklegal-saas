@@ -19,10 +19,10 @@ const NAV = [
 ];
 
 const ROUTE_META = {
-  '/portal':            { title: 'Home',       subtitle: 'Your firm overview' },
-  '/portal/assistants': { title: 'Assistants', subtitle: 'Legal team assigned to you' },
+  '/portal':            { title: 'Home',       subtitle: 'Firm overview' },
+  '/portal/assistants': { title: 'Assistants', subtitle: 'Legal team assigned' },
   '/portal/invoices':   { title: 'Invoices',   subtitle: 'Billing history' },
-  '/portal/analytics':  { title: 'Analytics',  subtitle: 'Your performance' },
+  '/portal/analytics':  { title: 'Analytics',  subtitle: 'Performance' },
 };
 
 export function PortalLayout() {
@@ -54,7 +54,7 @@ export function PortalLayout() {
                 : <div className={styles.logoIcon}>{BRAND.logoText}</div>}
               <div className={styles.logoText}>
                 <span>{BRAND.name}</span>
-                <span>Client Portal</span>
+                <span>Platform</span>
               </div>
             </div>
 

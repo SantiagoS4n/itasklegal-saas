@@ -54,7 +54,7 @@ export function PortalHome() {
 
       <div className={styles.greeting}>
         <h1 className={styles.greetTitle}>{greeting}, {displayName} 👋</h1>
-        <p className={styles.greetSub}>Here's your firm's summary</p>
+        <p className={styles.greetSub}>Firm summary</p>
         <button className={styles.refreshBtn} onClick={load}>↺ Refresh</button>
       </div>
 
