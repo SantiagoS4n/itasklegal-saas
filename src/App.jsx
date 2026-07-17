@@ -14,6 +14,12 @@ import { Analytics }  from '@/modules/analytics/Analytics';
 import { Users }      from '@/modules/users/Users';
 import { Profile }    from '@/modules/profile/Profile';
 
+import { PortalLayout }     from '@/modules/portal/PortalLayout';
+import { PortalHome }       from '@/modules/portal/PortalHome';
+import { PortalAssistants } from '@/modules/portal/PortalAssistants';
+import { PortalInvoices }   from '@/modules/portal/PortalInvoices';
+import { PortalAnalytics }  from '@/modules/portal/PortalAnalytics';
+
 // Detecta sesión expirada y redirige al login con mensaje
 function SessionWatcher() {
   const { user, loading } = useAuth();
@@ -35,18 +41,36 @@ function SessionWatcher() {
   return null;
 }
 
+// Solo admin — si es firm, lo manda a su portal
 function AdminRoute({ children }) {
   const { user, profile, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
+  if (profile?.role === 'firm') return <Navigate to="/portal" replace />;
   if (profile?.role !== 'admin') return <Navigate to="/login" replace />;
   return children;
 }
 
-function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
+// Solo firm — si es admin, lo manda al admin
+function FirmRoute({ children }) {
+  const { user, profile, loading } = useAuth();
   if (loading) return null;
-  return user ? <Navigate to="/" replace /> : children;
+  if (!user) return <Navigate to="/login" replace />;
+  if (profile?.role === 'admin') return <Navigate to="/" replace />;
+  if (profile?.role !== 'firm') return <Navigate to="/login" replace />;
+  return children;
+}
+
+// Login: redirige según el rol una vez autenticado
+function PublicRoute({ children }) {
+  const { user, profile, loading } = useAuth();
+  if (loading) return null;
+  if (user) {
+    return profile?.role === 'firm'
+      ? <Navigate to="/portal" replace />
+      : <Navigate to="/" replace />;
+  }
+  return children;
 }
 
 export default function App() {
@@ -59,6 +83,7 @@ export default function App() {
           <PublicRoute><Login /></PublicRoute>
         } />
 
+        {/* ── Admin ── */}
         <Route element={
           <AdminRoute><AppLayout /></AdminRoute>
         }>
@@ -71,8 +96,19 @@ export default function App() {
           <Route path="analytics"  element={<Analytics />} />
           <Route path="users"      element={<Users />} />
           <Route path="profile"    element={<Profile />} />
-          <Route path="*"          element={<Navigate to="/" replace />} />
         </Route>
+
+        {/* ── Firm Portal ── */}
+        <Route path="/portal" element={
+          <FirmRoute><PortalLayout /></FirmRoute>
+        }>
+          <Route index          element={<PortalHome />} />
+          <Route path="assistants" element={<PortalAssistants />} />
+          <Route path="invoices"   element={<PortalInvoices />} />
+          <Route path="analytics"  element={<PortalAnalytics />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </BrowserRouter>
