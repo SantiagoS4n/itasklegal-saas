@@ -130,46 +130,43 @@ function NewUserModal({ open, firms, onClose, onSaved }) {
     if (form.role === 'firm' && !form.firm_id) {
       toast('⚠️ Law Firm is required for firm users', 'warning'); return;
     }
-    setSaving(true);
 
-    // 1. Crear usuario en Supabase Auth
-    const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
-      email:    form.email,
-      password: form.password,
-      email_confirm: true,
-    });
-
-    if (authErr) {
-      // Fallback: signUp normal si no hay permisos de admin
-      const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
-        email:    form.email,
-        password: form.password,
-      });
-      if (signUpErr) { toast('❌ ' + signUpErr.message, 'error'); setSaving(false); return; }
-
-      // 2. Crear perfil
-      const userId = signUpData.user?.id;
-      if (userId) {
-        await supabase.from('user_profile').insert({
-          id:        userId,
-          role:      form.role,
-          firm_id:   form.firm_id || null,
-          full_name: form.full_name,
-        });
-      }
-    } else {
-      const userId = authData.user?.id;
-      if (userId) {
-        await supabase.from('user_profile').insert({
-          id:        userId,
-          role:      form.role,
-          firm_id:   form.firm_id || null,
-          full_name: form.full_name,
-        });
-      }
+    const webhookUrl = import.meta.env.VITE_N8N_CREATE_USER_WEBHOOK;
+    if (!webhookUrl) {
+      toast('❌ Webhook not configured (VITE_N8N_CREATE_USER_WEBHOOK)', 'error');
+      return;
     }
 
-    setSaving(false);
+    setSaving(true);
+    try {
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-webhook-token': import.meta.env.VITE_N8N_WEBHOOK_TOKEN || '',
+        },
+        body: JSON.stringify({
+          email:     form.email,
+          password:  form.password,
+          full_name: form.full_name,
+          role:      form.role,
+          firm_id:   form.firm_id || null,
+        }),
+      });
+
+      const result = await res.json().catch(() => ({}));
+      setSaving(false);
+
+      if (!res.ok || result.error) {
+        toast('❌ ' + (result.error || `Webhook responded ${res.status}`), 'error');
+        return;
+      }
+    } catch (err) {
+      setSaving(false);
+      toast('❌ Could not reach n8n: ' + err.message, 'error');
+      return;
+    }
+
     toast('✓ User created — they can now log in');
     onSaved();
   };
