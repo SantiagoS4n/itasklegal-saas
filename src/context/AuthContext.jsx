@@ -30,12 +30,15 @@ export function AuthProvider({ children }) {
         if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
           setUser(null);
           setProfile(null);
+          setLoading(false);
           return;
         }
-        // Sesión activa o renovada
+        // Sesión activa o renovada — esperar el perfil antes de destrabar rutas
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setLoading(true);
           setUser(session?.user ?? null);
           if (session?.user) await fetchProfile(session.user.id);
+          setLoading(false);
         }
         // Sesión expirada por inactividad
         if (event === 'USER_UPDATED') {
