@@ -26,19 +26,24 @@ export function AuthProvider({ children }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Sesión expirada o cerrada → limpiar estado
-        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+        // Sesión cerrada o token no renovable → limpiar estado
+        if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
           setUser(null);
           setProfile(null);
           setLoading(false);
           return;
         }
-        // Sesión activa o renovada — esperar el perfil antes de destrabar rutas
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Login real → esperar el perfil antes de destrabar rutas
+        if (event === 'SIGNED_IN') {
           setLoading(true);
           setUser(session?.user ?? null);
           if (session?.user) await fetchProfile(session.user.id);
           setLoading(false);
+        }
+        // Token renovado en segundo plano (foco de pestaña, etc.)
+        // → solo actualizar el user, SIN bloquear la app ni recargar el perfil
+        if (event === 'TOKEN_REFRESHED' && session) {
+          setUser(session.user);
         }
         // Sesión expirada por inactividad
         if (event === 'USER_UPDATED') {
