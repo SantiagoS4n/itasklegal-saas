@@ -12,16 +12,16 @@
 
 .editBtn {
   padding: 5px 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: rgba(0, 122, 245, 0.1);
+  border: 1px solid var(--blue);
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-2);
+  color: var(--blue);
   cursor: pointer;
   transition: all 0.15s;
 }
-.editBtn:hover { border-color: var(--gold); color: var(--gold-dark); }
+.editBtn:hover { background: var(--blue); color: white; }
 
 .editNote {
   grid-column: 1 / -1;

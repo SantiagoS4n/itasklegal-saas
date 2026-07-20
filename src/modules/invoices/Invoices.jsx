@@ -150,6 +150,7 @@ export function Invoices() {
               { key: 'invoice_date', label: 'Invoice Date' },
               { key: 'start_date', label: 'Period Start' },
               { key: 'end_date', label: 'Period End' },
+              { key: 'pdf_url', label: 'PDF Link' },
             ],
             `invoices_${filter}`
           )}>
@@ -226,14 +227,15 @@ export function Invoices() {
               </th>
               <th>Period Start</th>
               <th>Period End</th>
+              <th style={{ textAlign: 'center' }}>PDF</th>
               <th className={tableStyles.actCol}></th>
             </tr>
           </thead>
           <tbody>
-            {loading && <TableSkeleton rows={8} cols={8} />}
+            {loading && <TableSkeleton rows={8} cols={9} />}
             {!loading && displayed.length === 0 && (
               <tr className={tableStyles.stateRow}>
-                <td colSpan={8}>No invoices found.</td>
+                <td colSpan={9}>No invoices found.</td>
               </tr>
             )}
             {!loading && pagination.paginated.map(inv => (
@@ -269,6 +271,13 @@ export function Invoices() {
 
                 {/* Period End — solo lectura */}
                 <td>{inv.end_date || '—'}</td>
+
+                {/* PDF — link a Supabase Storage, generado por n8n */}
+                <td style={{ textAlign: 'center' }}>
+                  {inv.pdf_url
+                    ? <a href={inv.pdf_url} target="_blank" rel="noreferrer" className={tableStyles.linkCell}>⬇ PDF</a>
+                    : <span className={tableStyles.noLink}>—</span>}
+                </td>
 
                 <td className={tableStyles.actCol}>
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
