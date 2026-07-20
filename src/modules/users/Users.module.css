@@ -9,3 +9,26 @@
 }
 .roleAdmin { background: var(--gold-muted); color: var(--gold-dark); }
 .roleFirm  { background: #e3f2fd; color: #0d47a1; }
+
+.editBtn {
+  padding: 5px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.editBtn:hover { border-color: var(--gold); color: var(--gold-dark); }
+
+.editNote {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--text-2);
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  line-height: 1.5;
+}
