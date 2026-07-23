@@ -136,7 +136,7 @@ export function BizCards() {
                   <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
                     <button className={styles.editBtn} onClick={() => setModal({ open: true, data: c })}>Edit</button>
                     {c.firm_id
-                      ? <span className={styles.linkedBadge} title="Already has portal access">✓ Linked</span>
+                      ? <span className={styles.linkedBadge} title="Already has portal access">✓</span>
                       : <button className={styles.createFirmBtn} onClick={() => setFirmModal({ open: true, card: c })} title="Portal access">🔑</button>
                     }
                     <button className={tableStyles.deleteBtn} onClick={() => handleDelete(c)}>✕</button>
