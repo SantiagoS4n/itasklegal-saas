@@ -135,7 +135,10 @@ export function BizCards() {
                 <td className={tableStyles.actCol}>
                   <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
                     <button className={styles.editBtn} onClick={() => setModal({ open: true, data: c })}>Edit</button>
-                    <button className={styles.createFirmBtn} onClick={() => setFirmModal({ open: true, card: c })} title="Portal access">🔑</button>
+                    {c.firm_id
+                      ? <span className={styles.linkedBadge} title="Already has portal access">✓ Linked</span>
+                      : <button className={styles.createFirmBtn} onClick={() => setFirmModal({ open: true, card: c })} title="Portal access">🔑</button>
+                    }
                     <button className={tableStyles.deleteBtn} onClick={() => handleDelete(c)}>✕</button>
                   </div>
                 </td>
@@ -201,7 +204,6 @@ function BizCardModal({ open, initial, onClose, onSaved }) {
         <Field label="Country"><Input value={form.country} onChange={set('country')} placeholder="USA" /></Field>
         <Field label="Address" className="full"><Input value={form.address} onChange={set('address')} placeholder="123 Main St" /></Field>
         <Field label="Notes" className="full"><Input value={form.notes} onChange={set('notes')} placeholder="Met at conference…" /></Field>
-        <Field label="Source File" className="full"><Input value={form.source_file} onChange={set('source_file')} placeholder="scan_001.jpg" /></Field>
       </ModalGrid>
       <ModalActions>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>

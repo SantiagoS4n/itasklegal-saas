@@ -118,7 +118,7 @@ export function CreateFirmUserModal({ open, card, firms, onClose, onDone, toast 
       </Field>
       <div style={{ height: 14 }} />
       <Field label="Login Password *">
-        <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" />
+        <Input type="text" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters" />
       </Field>
 
       <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 10 }}>
