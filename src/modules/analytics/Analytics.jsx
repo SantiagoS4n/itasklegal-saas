@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { fmtMoney } from '@/utils/format';
+import { getMonthComparison, MonthComparisonBadge } from '@/utils/monthComparison';
 import { MonthFilter } from '@/components/ui/MonthFilter';
 import styles from './Analytics.module.css';
 
@@ -38,6 +39,7 @@ export function Analytics() {
   const marginPct  = kpis.invoiced_paid
     ? ((margin / kpis.invoiced_paid) * 100).toFixed(1)
     : 0;
+  const paidComparison = getMonthComparison(invoices_by_month, 'paid');
 
   return (
     <div className={styles.wrap}>
@@ -69,7 +71,7 @@ export function Analytics() {
       {/* ── KPI Cards — fila 2: financiero ── */}
       <div className={styles.kpiGrid}>
         <KpiCard label="Total Invoiced"  value={`$${fmtMoney(kpis.total_invoiced)}`}  accent="neutral" />
-        <KpiCard label="Invoiced Paid"   value={`$${fmtMoney(kpis.invoiced_paid)}`}   accent="success" />
+        <KpiCard label="Invoiced Paid"   value={`$${fmtMoney(kpis.invoiced_paid)}`}   accent="success" sub={paidComparison && <MonthComparisonBadge comparison={paidComparison} />} />
         <KpiCard label="Total Sent Out"  value={`$${fmtMoney(kpis.total_paid_usd)}`}  accent="neutral" />
         <KpiCard
           label="Gross Margin"

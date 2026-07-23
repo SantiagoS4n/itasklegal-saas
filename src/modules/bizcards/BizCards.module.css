@@ -32,3 +32,16 @@
   border-color: var(--gold);
   box-shadow: 0 0 0 3px var(--gold-ring);
 }
+
+.createFirmBtn {
+  padding: 6px 9px;
+  background: transparent;
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.createFirmBtn:hover { border-color: var(--gold); color: var(--gold-dark); background: var(--gold-muted); }

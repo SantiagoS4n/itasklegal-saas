@@ -12,7 +12,9 @@ import { dirtyStore } from '@/context/DirtyContext';
 import { exportToCSV } from '@/utils/exportCSV';
 import styles from './LawFirms.module.css';
 
-const EMPTY = { firm_name: '', firm_phone: '', email: '', address: '', notes: '' };
+const EMPTY = { firm_name: '', contact_name: '', firm_phone: '', email: '', address: '', notes: '' };
+
+const mark = r => { r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); };
 
 export function LawFirms() {
   const toast   = useAppToast();
@@ -49,13 +51,6 @@ export function LawFirms() {
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
   };
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Delete "${name}"?`)) return;
-    const { error } = await supabase.from('law_firm').delete().eq('ID_number', id);
-    if (error) { toast('❌ ' + error.message, 'error'); return; }
-    toast('✓ Firm deleted'); load();
-  };
-
   return (
     <div>
       <div className={styles.header}>
@@ -69,6 +64,7 @@ export function LawFirms() {
             [
               { key: 'ID_number', label: 'ID' },
               { key: 'firm_name', label: 'Firm Name' },
+              { key: 'contact_name', label: 'Contact Name' },
               { key: 'firm_phone', label: 'Phone' },
               { key: 'email', label: 'Email' },
               { key: 'address', label: 'Address' },
@@ -86,29 +82,31 @@ export function LawFirms() {
         <table className={tableStyles.table}>
           <thead>
             <tr>
-              <SortableTh sortKey="ID_number" icon={icon} onToggle={toggle} className={tableStyles.stickyCol}>ID</SortableTh>
-              <SortableTh sortKey="firm_name"  icon={icon} onToggle={toggle}>Firm Name</SortableTh>
-              <SortableTh sortKey="firm_phone" icon={icon} onToggle={toggle}>Phone</SortableTh>
-              <SortableTh sortKey="email"      icon={icon} onToggle={toggle}>Email</SortableTh>
-              <SortableTh sortKey="address"    icon={icon} onToggle={toggle}>Address</SortableTh>
-              <SortableTh sortKey="notes"      icon={icon} onToggle={toggle}>Notes</SortableTh>
+              <SortableTh sortKey="ID_number"    icon={icon} onToggle={toggle} className={tableStyles.stickyCol}>ID</SortableTh>
+              <SortableTh sortKey="firm_name"    icon={icon} onToggle={toggle}>Firm Name</SortableTh>
+              <SortableTh sortKey="contact_name" icon={icon} onToggle={toggle}>Contact Name</SortableTh>
+              <SortableTh sortKey="firm_phone"   icon={icon} onToggle={toggle}>Phone</SortableTh>
+              <SortableTh sortKey="email"        icon={icon} onToggle={toggle}>Email</SortableTh>
+              <SortableTh sortKey="address"      icon={icon} onToggle={toggle}>Address</SortableTh>
+              <SortableTh sortKey="notes"        icon={icon} onToggle={toggle}>Notes</SortableTh>
               <th className={tableStyles.actCol}></th>
             </tr>
           </thead>
           <tbody>
-            {loading && <TableSkeleton rows={8} cols={7} />}
-            {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={7}>No law firms yet.</td></tr>}
+            {loading && <TableSkeleton rows={8} cols={8} />}
+            {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={8}>No law firms yet.</td></tr>}
             {!loading && pagination.paginated.map(f => (
               <tr key={f.ID_number} data-id={f.ID_number}>
                 <td className={tableStyles.stickyCol}
                   onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>
                   {f.ID_number}
                 </td>
-                <td><div className={`${tableStyles.editable} ${tableStyles.bold}`} contentEditable suppressContentEditableWarning data-field="firm_name" onInput={e => { const r = e.target.closest('tr'); r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); }}>{f.firm_name||''}</div></td>
-                <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="firm_phone" onInput={e => { const r = e.target.closest('tr'); r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); }}>{f.firm_phone||''}</div></td>
-                <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="email" onInput={e => { const r = e.target.closest('tr'); r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); }}>{f.email||''}</div></td>
-                <td><div className={`${tableStyles.editable} ${tableStyles.wide}`} contentEditable suppressContentEditableWarning data-field="address" onInput={e => { const r = e.target.closest('tr'); r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); }}>{f.address||''}</div></td>
-                <td><div className={`${tableStyles.editable} ${tableStyles.wide}`} contentEditable suppressContentEditableWarning data-field="notes" onInput={e => { const r = e.target.closest('tr'); r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); }}>{f.notes||''}</div></td>
+                <td><div className={`${tableStyles.editable} ${tableStyles.bold}`} contentEditable suppressContentEditableWarning data-field="firm_name" onInput={e => mark(e.target.closest('tr'))}>{f.firm_name||''}</div></td>
+                <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="contact_name" onInput={e => mark(e.target.closest('tr'))}>{f.contact_name||''}</div></td>
+                <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="firm_phone" onInput={e => mark(e.target.closest('tr'))}>{f.firm_phone||''}</div></td>
+                <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="email" onInput={e => mark(e.target.closest('tr'))}>{f.email||''}</div></td>
+                <td><div className={`${tableStyles.editable} ${tableStyles.wide}`} contentEditable suppressContentEditableWarning data-field="address" onInput={e => mark(e.target.closest('tr'))}>{f.address||''}</div></td>
+                <td><div className={`${tableStyles.editable} ${tableStyles.wide}`} contentEditable suppressContentEditableWarning data-field="notes" onInput={e => mark(e.target.closest('tr'))}>{f.notes||''}</div></td>
                 <td className={tableStyles.actCol}>
                   <button className={tableStyles.saveBtn} onClick={e => handleSave(e.currentTarget, e.currentTarget.closest('tr'))}>Save</button>
                 </td>
@@ -125,13 +123,21 @@ export function LawFirms() {
   );
 }
 
-function LawFirmModal({ open, initial, onClose, onSaved }) {
+export function LawFirmModal({ open, initial, onClose, onSaved }) {
   const toast = useAppToast();
+  const isEdit = !!initial?.ID_number;
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setForm(initial ? { firm_name: initial.firm_name||'', firm_phone: initial.firm_phone||'', email: initial.email||'', address: initial.address||'', notes: initial.notes||'' } : EMPTY);
+    setForm(initial ? {
+      firm_name: initial.firm_name||'',
+      contact_name: initial.contact_name||'',
+      firm_phone: initial.firm_phone||'',
+      email: initial.email||'',
+      address: initial.address||'',
+      notes: initial.notes||''
+    } : EMPTY);
   }, [initial, open]);
 
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
@@ -139,19 +145,20 @@ function LawFirmModal({ open, initial, onClose, onSaved }) {
   const submit = async () => {
     if (!form.firm_name.trim()) { toast('⚠️ Firm Name is required', 'warning'); return; }
     setSaving(true);
-    const { error } = initial
-      ? await supabase.from('law_firm').update(form).eq('ID_number', initial.ID_number)
-      : await supabase.from('law_firm').insert(form);
+    const { data, error } = isEdit
+      ? await supabase.from('law_firm').update(form).eq('ID_number', initial.ID_number).select().single()
+      : await supabase.from('law_firm').insert(form).select().single();
     setSaving(false);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
-    toast(initial ? '✓ Firm updated' : '✓ Firm created');
-    onSaved();
+    toast(isEdit ? '✓ Firm updated' : '✓ Firm created');
+    onSaved(data);
   };
 
   return (
-    <Modal open={open} title={initial ? 'Edit Law Firm' : 'New Law Firm'} onClose={onClose}>
+    <Modal open={open} title={isEdit ? 'Edit Law Firm' : 'New Law Firm'} onClose={onClose}>
       <ModalGrid>
-        <Field label="Firm Name *" className="full"><Input value={form.firm_name} onChange={set('firm_name')} placeholder="Telare Law PLLC" /></Field>
+        <Field label="Firm Name *"><Input value={form.firm_name} onChange={set('firm_name')} placeholder="Telare Law PLLC" /></Field>
+        <Field label="Contact Name"><Input value={form.contact_name} onChange={set('contact_name')} placeholder="John Smith" /></Field>
         <Field label="Phone"><Input value={form.firm_phone} onChange={set('firm_phone')} placeholder="+1 555 000 0000" /></Field>
         <Field label="Email"><Input type="email" value={form.email} onChange={set('email')} placeholder="contact@firm.com" /></Field>
         <Field label="Address" className="full"><Input value={form.address} onChange={set('address')} placeholder="123 Main St" /></Field>
@@ -159,7 +166,7 @@ function LawFirmModal({ open, initial, onClose, onSaved }) {
       </ModalGrid>
       <ModalActions>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
-        <Button variant="primary" loading={saving} onClick={submit}>{initial ? 'Save Changes' : 'Create Firm'}</Button>
+        <Button variant="primary" loading={saving} onClick={submit}>{isEdit ? 'Save Changes' : 'Create Firm'}</Button>
       </ModalActions>
     </Modal>
   );

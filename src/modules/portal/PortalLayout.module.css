@@ -59,8 +59,7 @@
   white-space: nowrap; overflow: hidden;
   margin-bottom: 1px;
   text-decoration: none;
-}
-.navItem:hover {
+}.navItem:hover {
   background: rgba(255,255,255,0.07);
   color: rgba(255,255,255,0.85);
   text-decoration: none;
@@ -68,6 +67,16 @@
 .active {
   background: rgba(186,167,95,0.18) !important;
   color: var(--gold) !important;
+}
+
+.badge {
+  margin-left: auto;
+  background: var(--danger);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 20px;
 }
 
 .navIcon { font-size: 16px; min-width: 20px; text-align: center; }

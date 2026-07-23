@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { Modal } from '@/components/ui/Modal';
-import { Button, Field, Input, ModalGrid, ModalActions, SortableTh } from '@/components/ui/index';
+import { Button, Field, Input, Select, ModalGrid, ModalActions, SortableTh } from '@/components/ui/index';
 import { useSort } from '@/hooks/useSort';
 import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/ui/Pagination';
@@ -10,22 +10,31 @@ import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import tableStyles from '@/styles/table.module.css';
 import { dirtyStore } from '@/context/DirtyContext';
 import { exportToCSV } from '@/utils/exportCSV';
+import { CreateFirmUserModal } from '@/modules/bizcards/CreateFirmUserModal';
 import styles from './BizCards.module.css';
 
 const EMPTY = { full_name:'', company:'', job_title:'', email:'', phone_office:'', phone_fax:'', website:'', address:'', city:'', state:'', country:'', notes:'', source_file:'' };
 
+const markDirty = el => { const r = el.closest('tr'); if (!r) return; r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('card-' + r.dataset.id); };
+
 export function BizCards() {
   const toast = useAppToast();
   const [cards,   setCards]   = useState([]);
+  const [firms,   setFirms]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal,   setModal]   = useState({ open: false, data: null });
+  const [firmModal, setFirmModal] = useState({ open: false, card: null });
   const [search,  setSearch]  = useState('');
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('bussinescard').select('*').order('ID');
-    if (error) toast('❌ ' + error.message, 'error');
-    else setCards(data);
+    const [cardsRes, firmsRes] = await Promise.all([
+      supabase.from('bussinescard').select('*, law_firm(firm_name)').order('ID'),
+      supabase.from('law_firm').select('ID_number, firm_name').order('firm_name'),
+    ]);
+    if (cardsRes.error) toast('❌ ' + cardsRes.error.message, 'error');
+    else setCards(cardsRes.data);
+    if (!firmsRes.error) setFirms(firmsRes.data);
     setLoading(false);
   };
 
@@ -42,38 +51,36 @@ export function BizCards() {
   const handleSave = async (btn, row) => {
     const id = row.dataset.id;
     const payload = {};
-    row.querySelectorAll('[data-field]').forEach(el => { payload[el.dataset.field] = el.innerText.trim() || null; });
+    row.querySelectorAll('[data-field]').forEach(el => {
+      const val = el.value !== undefined ? el.value : el.innerText.trim();
+      payload[el.dataset.field] = val || null;
+    });
     if (!payload.full_name) { toast('⚠️ Name is required', 'warning'); return; }
     btn.classList.remove(tableStyles.dirty); btn.textContent = '…';
     const { error } = await supabase.from('bussinescard').update(payload).eq('ID', id);
     if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
     toast('✓ Card saved'); dirtyStore.remove('card-' + id);
     btn.textContent = '✓'; btn.style.background = 'var(--success)';
-    setCards(prev => prev.map(c => String(c.ID) === String(id) ? { ...c, ...payload } : c));
+    setCards(prev => prev.map(c => {
+      if (String(c.ID) !== String(id)) return c;
+      const updated = { ...c, ...payload };
+      const firm = firms.find(f => String(f.ID_number) === String(payload.firm_id));
+      updated.law_firm = firm ? { firm_name: firm.firm_name } : null;
+      return updated;
+    }));
     setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
   };
 
   const handleDelete = async (card) => {
     const cardId = card.ID ?? card.id;
-
     if (cardId === null || cardId === undefined) {
       toast('❌ Cannot delete: this card has no ID', 'error');
       return;
     }
-
-    // Mostrar nombre si existe, pero siempre con el ID para claridad
-    const label = card.full_name
-      ? `"${card.full_name}" (card #${cardId})`
-      : `card #${cardId}`;
-
+    const label = card.full_name ? `"${card.full_name}" (card #${cardId})` : `card #${cardId}`;
     if (!confirm(`Delete ${label}?`)) return;
 
-    const { data, error } = await supabase
-      .from('bussinescard')
-      .delete()
-      .eq('ID', cardId)
-      .select();
-
+    const { data, error } = await supabase.from('bussinescard').delete().eq('ID', cardId).select();
     if (error) { toast('❌ ' + error.message, 'error'); return; }
     if (!data || data.length === 0) {
       toast('⚠️ Nothing was deleted — check RLS policy or ID', 'warning');
@@ -83,7 +90,10 @@ export function BizCards() {
     load();
   };
 
-  const markDirty = el => { const r = el.closest('tr'); if (!r) return; r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('card-' + r.dataset.id); };
+  // Abre el modal combinado (crea Law Firm + usuario de portal)
+  const openCreateFirmFromCard = (card) => {
+    setFirmModal({ open: true, card });
+  };
 
   return (
     <div>
@@ -109,6 +119,7 @@ export function BizCards() {
               { key: 'country', label: 'Country' },
               { key: 'address', label: 'Address' },
               { key: 'notes', label: 'Notes' },
+              { key: 'law_firm.firm_name', label: 'Linked Firm' },
             ],
             'business_cards'
           )}>
@@ -119,7 +130,7 @@ export function BizCards() {
       </div>
 
       <div className={tableStyles.tableWrap}>
-        <table className={tableStyles.table} style={{ minWidth: 1600 }}>
+        <table className={tableStyles.table} style={{ minWidth: 1750 }}>
           <thead>
             <tr>
               <SortableTh sortKey="ID"           icon={icon} onToggle={toggle} className={tableStyles.stickyCol}>ID</SortableTh>
@@ -136,12 +147,13 @@ export function BizCards() {
               <th>Address</th>
               <th>Notes</th>
               <th>Source File</th>
+              <SortableTh sortKey="law_firm.firm_name" icon={icon} onToggle={toggle}>Linked Firm</SortableTh>
               <th className={tableStyles.actCol}></th>
             </tr>
           </thead>
           <tbody>
-            {loading && <TableSkeleton rows={8} cols={15} />}
-            {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={15}>{search ? 'No results.' : 'No cards yet.'}</td></tr>}
+            {loading && <TableSkeleton rows={8} cols={16} />}
+            {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={16}>{search ? 'No results.' : 'No cards yet.'}</td></tr>}
             {!loading && pagination.paginated.map(c => (
               <tr key={c.ID} data-id={c.ID}>
                 <td className={tableStyles.stickyCol} onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>{c.ID}</td>
@@ -154,9 +166,28 @@ export function BizCards() {
                     </div>
                   </td>
                 ))}
+                {/* Linked Firm — dropdown de asignación */}
+                <td>
+                  <select
+                    className={tableStyles.selInput}
+                    data-field="firm_id"
+                    defaultValue={c.firm_id || ''}
+                    onChange={e => markDirty(e.target)}
+                  >
+                    <option value="">— Unlinked —</option>
+                    {firms.map(f => (
+                      <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>
+                    ))}
+                  </select>
+                </td>
                 <td className={tableStyles.actCol}>
                   <div style={{ display:'flex', gap:6, justifyContent:'center' }}>
                     <button className={tableStyles.saveBtn} onClick={e => handleSave(e.currentTarget, e.currentTarget.closest('tr'))}>Save</button>
+                    {!c.firm_id && (
+                      <button className={styles.createFirmBtn} onClick={() => openCreateFirmFromCard(c)} title="Create firm / portal login">
+                        🔑
+                      </button>
+                    )}
                     <button className={tableStyles.deleteBtn} onClick={() => handleDelete(c)}>✕</button>
                   </div>
                 </td>
@@ -169,6 +200,16 @@ export function BizCards() {
       <Pagination {...pagination} />
 
       <BizCardModal open={modal.open} initial={modal.data} onClose={() => setModal({ open: false, data: null })} onSaved={() => { setModal({ open: false, data: null }); load(); }} />
+
+      {/* Modal combinado: crea Law Firm + usuario de portal, y vincula la card */}
+      <CreateFirmUserModal
+        open={firmModal.open}
+        card={firmModal.card}
+        firms={firms}
+        toast={toast}
+        onClose={() => setFirmModal({ open: false, card: null })}
+        onDone={() => { setFirmModal({ open: false, card: null }); load(); }}
+      />
     </div>
   );
 }

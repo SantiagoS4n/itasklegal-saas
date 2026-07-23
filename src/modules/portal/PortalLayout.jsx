@@ -1,5 +1,6 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { BRAND } from '@/config/brand';
 import { Toast } from '@/components/ui/Toast';
@@ -14,7 +15,7 @@ export const usePortalToast = () => useContext(ToastCtx);
 const NAV = [
   { to: '/portal',            label: 'Home',       icon: '🏠', end: true },
   { to: '/portal/assistants', label: 'Assistants', icon: '👤' },
-  { to: '/portal/invoices',   label: 'Invoices',   icon: '🧾' },
+  { to: '/portal/invoices',   label: 'Invoices',   icon: '🧾', badgeKey: 'overdueInvoices' },
   { to: '/portal/analytics',  label: 'Analytics',  icon: '📊' },
 ];
 
@@ -27,10 +28,23 @@ const ROUTE_META = {
 
 export function PortalLayout() {
   const { toast, show } = useToast();
-  const { displayName, initials, signOut } = useAuth();
+  const { displayName, initials, signOut, firmId } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [badges, setBadges] = useState({ overdueInvoices: 0 });
+
+  const loadBadges = async () => {
+    if (!firmId) return;
+    const { count } = await supabase
+      .from('invoice')
+      .select('invoice_number', { count: 'exact', head: true })
+      .eq('firm_id', firmId)
+      .eq('status', 'overdue');
+    setBadges({ overdueInvoices: count || 0 });
+  };
+
+  useEffect(() => { loadBadges(); }, [firmId, pathname]);
 
   const handleLogout = async () => {
     await signOut();
@@ -69,6 +83,9 @@ export function PortalLayout() {
                 >
                   <span className={styles.navIcon}>{item.icon}</span>
                   <span className={styles.navLabel}>{item.label}</span>
+                  {item.badgeKey && badges[item.badgeKey] > 0 && (
+                    <span className={styles.badge}>{badges[item.badgeKey]}</span>
+                  )}
                 </NavLink>
               ))}
             </nav>

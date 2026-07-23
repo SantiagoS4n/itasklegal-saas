@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { fmtMoney } from '@/utils/format';
+import { getMonthComparison, MonthComparisonBadge } from '@/utils/monthComparison';
 import { MonthFilter } from '@/components/ui/MonthFilter';
 import styles from '@/modules/analytics/Analytics.module.css';
 
@@ -63,6 +64,8 @@ export function PortalAnalytics() {
     </div>
   );
 
+  const paidComparison = getMonthComparison(trend, 'paid');
+
   return (
     <div className={styles.wrap}>
       <div className={styles.pageHeader}>
@@ -78,7 +81,7 @@ export function PortalAnalytics() {
       <div className={styles.kpiGrid}>
         <KpiCard label="Active Assistants" value={data.active_assistants} />
         <KpiCard label="Total Invoiced" value={`$${fmtMoney(data.total_invoiced)}`} />
-        <KpiCard label="Paid" value={`$${fmtMoney(data.invoiced_paid)}`} accent="success" />
+        <KpiCard label="Paid" value={`$${fmtMoney(data.invoiced_paid)}`} accent="success" sub={paidComparison && <MonthComparisonBadge comparison={paidComparison} />} />
         <KpiCard label="Pending" value={`$${fmtMoney(data.invoiced_pending)}`} accent="neutral" />
       </div>
 
