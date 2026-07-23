@@ -45,3 +45,16 @@
   transition: all 0.15s;
 }
 .createFirmBtn:hover { border-color: var(--gold); color: var(--gold-dark); background: var(--gold-muted); }
+
+.editBtn {
+  padding: 6px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.editBtn:hover { background: var(--border-2); color: var(--text); }
