@@ -77,7 +77,7 @@ export function Assistants() {
   }, [byFirm, search]);
 
   // 4. Ordenar por columna
-  const { sorted, toggle, icon } = useSort(searched, 'full_name', 'asc');
+  const { sorted, toggle, icon } = useSort(searched, 'ID', 'desc');
 
   // 4. Paginación
   const pagination = usePagination(sorted, 25);

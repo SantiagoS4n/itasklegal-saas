@@ -42,7 +42,7 @@ export function BizCards() {
     return !q || (c.full_name||'').toLowerCase().includes(q) || (c.company||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q) || (c.job_title||'').toLowerCase().includes(q);
   });
 
-  const { sorted, toggle, icon } = useSort(filtered, 'full_name', 'asc');
+  const { sorted, toggle, icon } = useSort(filtered, 'ID', 'desc');
   const pagination = usePagination(sorted, 25);
 
   const handleDelete = async (card) => {

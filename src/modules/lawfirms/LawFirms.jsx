@@ -82,8 +82,7 @@ export function LawFirms() {
         <table className={tableStyles.table}>
           <thead>
             <tr>
-              <SortableTh sortKey="ID_number"    icon={icon} onToggle={toggle} className={tableStyles.stickyCol}>ID</SortableTh>
-              <SortableTh sortKey="firm_name"    icon={icon} onToggle={toggle}>Firm Name</SortableTh>
+              <SortableTh sortKey="firm_name"    icon={icon} onToggle={toggle} className={tableStyles.stickyCol}>Firm Name</SortableTh>
               <SortableTh sortKey="contact_name" icon={icon} onToggle={toggle}>Contact Name</SortableTh>
               <SortableTh sortKey="firm_phone"   icon={icon} onToggle={toggle}>Phone</SortableTh>
               <SortableTh sortKey="email"        icon={icon} onToggle={toggle}>Email</SortableTh>
@@ -93,15 +92,13 @@ export function LawFirms() {
             </tr>
           </thead>
           <tbody>
-            {loading && <TableSkeleton rows={8} cols={8} />}
-            {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={8}>No law firms yet.</td></tr>}
+            {loading && <TableSkeleton rows={8} cols={7} />}
+            {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={7}>No law firms yet.</td></tr>}
             {!loading && pagination.paginated.map(f => (
               <tr key={f.ID_number} data-id={f.ID_number}>
-                <td className={tableStyles.stickyCol}
-                  onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>
-                  {f.ID_number}
+                <td className={tableStyles.stickyCol}>
+                  <div className={`${tableStyles.editable} ${tableStyles.bold}`} contentEditable suppressContentEditableWarning data-field="firm_name" onInput={e => mark(e.target.closest('tr'))}>{f.firm_name||''}</div>
                 </td>
-                <td><div className={`${tableStyles.editable} ${tableStyles.bold}`} contentEditable suppressContentEditableWarning data-field="firm_name" onInput={e => mark(e.target.closest('tr'))}>{f.firm_name||''}</div></td>
                 <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="contact_name" onInput={e => mark(e.target.closest('tr'))}>{f.contact_name||''}</div></td>
                 <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="firm_phone" onInput={e => mark(e.target.closest('tr'))}>{f.firm_phone||''}</div></td>
                 <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="email" onInput={e => mark(e.target.closest('tr'))}>{f.email||''}</div></td>
