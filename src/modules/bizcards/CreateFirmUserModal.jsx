@@ -6,9 +6,10 @@ import { Button, Field, Input, ModalActions } from '@/components/ui/index';
 function suggestPassword(firmName) {
   const slug = (firmName || 'itasklegal')
     .toLowerCase()
+    .trim()
     .replace(/[^a-z0-9]/g, '')
-    .slice(0, 20);
-  return `${slug || 'itasklegal'}.portal`;
+    .slice(0, 30);
+  return `${slug || 'itasklegal'}.itasklegal`;
 }
 
 /**
@@ -34,7 +35,7 @@ export function CreateFirmUserModal({ open, card, firms, onClose, onDone, toast 
 
     setMatchedFirm(match || null);
     setEmail(card.email || '');
-    setPassword(suggestPassword(card.company));
+    setPassword(suggestPassword(match ? match.firm_name : card.company));
   }, [open, card, firms]);
 
   const submit = async () => {
