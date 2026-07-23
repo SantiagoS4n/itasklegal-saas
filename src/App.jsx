@@ -43,21 +43,29 @@ function SessionWatcher() {
 
 // Solo admin — si es firm, lo manda a su portal
 function AdminRoute({ children }) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (profile?.role === 'firm') return <Navigate to="/portal" replace />;
   if (profile?.role !== 'admin') return <Navigate to="/login" replace />;
+  if (profile?.active === false) {
+    signOut();
+    return <Navigate to="/login?deactivated=1" replace />;
+  }
   return children;
 }
 
 // Solo firm — si es admin, lo manda al admin
 function FirmRoute({ children }) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (profile?.role === 'admin') return <Navigate to="/" replace />;
   if (profile?.role !== 'firm') return <Navigate to="/login" replace />;
+  if (profile?.active === false) {
+    signOut();
+    return <Navigate to="/login?deactivated=1" replace />;
+  }
   return children;
 }
 

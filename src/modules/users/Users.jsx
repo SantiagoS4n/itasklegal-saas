@@ -36,6 +36,18 @@ export function Users() {
 
   const { sorted, toggle, icon } = useSort(users, 'full_name', 'asc');
 
+  const handleToggleActive = async (u) => {
+    if (u.id === currentUser?.id) {
+      toast('⚠️ You cannot deactivate your own account', 'warning');
+      return;
+    }
+    const newVal = !(u.active !== false);
+    const { error } = await supabase.from('user_profile').update({ active: newVal }).eq('id', u.id);
+    if (error) { toast('❌ ' + error.message, 'error'); return; }
+    setUsers(prev => prev.map(x => x.id === u.id ? { ...x, active: newVal } : x));
+    toast(newVal ? '✓ User activated' : '✓ User deactivated — they can no longer log in');
+  };
+
   const handleDelete = async (u) => {
     if (u.id === currentUser?.id) {
       toast('⚠️ You cannot delete your own account', 'warning');
@@ -97,18 +109,19 @@ export function Users() {
               <SortableTh sortKey="role"               icon={icon} onToggle={toggle}>Role</SortableTh>
               <SortableTh sortKey="law_firm.firm_name" icon={icon} onToggle={toggle}>Law Firm</SortableTh>
               <SortableTh sortKey="created_at"         icon={icon} onToggle={toggle}>Created</SortableTh>
+              <th style={{ textAlign: 'center' }}>Status</th>
               <th className={tableStyles.actCol}></th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr className={tableStyles.stateRow}>
-                <td colSpan={5}>Loading users…</td>
+                <td colSpan={6}>Loading users…</td>
               </tr>
             )}
             {!loading && sorted.length === 0 && (
               <tr className={tableStyles.stateRow}>
-                <td colSpan={5}>No users yet.</td>
+                <td colSpan={6}>No users yet.</td>
               </tr>
             )}
             {!loading && sorted.map(u => (
@@ -124,6 +137,15 @@ export function Users() {
                 <td>{u.law_firm?.firm_name || <span style={{ color: 'var(--text-3)' }}>—</span>}</td>
                 <td style={{ color: 'var(--text-2)', fontSize: 12 }}>
                   {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                  <button
+                    className={u.active !== false ? styles.statusActive : styles.statusInactive}
+                    onClick={() => handleToggleActive(u)}
+                    title={u.active !== false ? 'Click to deactivate' : 'Click to activate'}
+                  >
+                    {u.active !== false ? 'Active' : 'Inactive'}
+                  </button>
                 </td>
                 <td className={tableStyles.actCol}>
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
