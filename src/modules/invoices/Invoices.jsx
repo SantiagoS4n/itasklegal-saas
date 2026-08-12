@@ -41,6 +41,7 @@ export function Invoices() {
   const [monthFilter, setMonthFilter] = useState('');
   const [sort,     setSort]     = useState({ key: 'invoice_date', dir: 'desc' });
   const [savingId, setSavingId] = useState(null); // invoice_number que se está guardando (feedback visual)
+  const [pdfLoadingId, setPdfLoadingId] = useState(null); // invoice_number cuyo PDF se está firmando
 
   const load = async () => {
     setLoading(true);
@@ -73,6 +74,20 @@ export function Invoices() {
         ? { ...inv, status: newStatus }
         : inv
     ));
+  };
+
+  // El bucket "invoice" es privado: no existe URL permanente.
+  // Se genera una signed URL de 5 minutos en el momento del clic.
+  const openPdf = async (invoiceNumber, path) => {
+    if (!path) { toast('⚠️ This invoice has no PDF yet', 'warning'); return; }
+    setPdfLoadingId(invoiceNumber);
+    const { data, error } = await supabase
+      .storage
+      .from('invoice')
+      .createSignedUrl(path, 300); // 300 s = 5 min
+    setPdfLoadingId(null);
+    if (error) { toast('❌ ' + error.message, 'error'); return; }
+    window.open(data.signedUrl, '_blank', 'noopener');
   };
 
   const handleDelete = async (id) => {
@@ -150,7 +165,7 @@ export function Invoices() {
               { key: 'invoice_date', label: 'Invoice Date' },
               { key: 'start_date', label: 'Period Start' },
               { key: 'end_date', label: 'Period End' },
-              { key: 'pdf_url', label: 'PDF Link' },
+              { key: 'pdf_path', label: 'PDF Path' },
             ],
             `invoices_${filter}`
           )}>
@@ -272,10 +287,23 @@ export function Invoices() {
                 {/* Period End — solo lectura */}
                 <td>{inv.end_date || '—'}</td>
 
-                {/* PDF — link a Supabase Storage, generado por n8n */}
+                {/* PDF — bucket privado: se firma la URL al hacer clic */}
                 <td style={{ textAlign: 'center' }}>
-                  {inv.pdf_url
-                    ? <a href={inv.pdf_url} target="_blank" rel="noreferrer" className={tableStyles.linkCell}>⬇ PDF</a>
+                  {inv.pdf_path
+                    ? <button
+                        className={tableStyles.linkCell}
+                        disabled={pdfLoadingId === inv.invoice_number}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          font: 'inherit',
+                          color: 'inherit',
+                          cursor: pdfLoadingId === inv.invoice_number ? 'wait' : 'pointer',
+                        }}
+                        onClick={() => openPdf(inv.invoice_number, inv.pdf_path)}>
+                        {pdfLoadingId === inv.invoice_number ? '…' : '⬇ PDF'}
+                      </button>
                     : <span className={tableStyles.noLink}>—</span>}
                 </td>
 
