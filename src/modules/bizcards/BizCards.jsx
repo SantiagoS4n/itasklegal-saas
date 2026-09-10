@@ -125,8 +125,20 @@ export function BizCards() {
                 <td className={tableStyles.bold} style={{ padding: '10px 8px' }}>{c.full_name || '—'}</td>
                 <td>{c.company || '—'}</td>
                 <td>{c.job_title || '—'}</td>
-                <td>{c.email || '—'}</td>
-                <td>{c.phone_office || '—'}</td>
+                <td>
+                  {c.email ? (
+                    <a href={`mailto:${c.email}`} className={styles.emailLink}>
+                      {c.email}
+                    </a>
+                  ) : '—'}
+                </td>
+                <td>
+                  {c.phone_office ? (
+                    <a href={`tel:${c.phone_office}`} className={styles.phoneLink}>
+                      {c.phone_office}
+                    </a>
+                  ) : '—'}
+                </td>
                 <td>{c.website || '—'}</td>
                 <td>{c.city || '—'}</td>
                 <td>{c.country || '—'}</td>

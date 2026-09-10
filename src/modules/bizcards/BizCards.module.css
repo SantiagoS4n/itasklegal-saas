@@ -59,6 +59,17 @@
 }
 .editBtn:hover { background: var(--border-2); color: var(--text); }
 
+.emailLink,
+.phoneLink {
+  color: var(--text-2);
+  text-decoration: none;
+}
+.emailLink:hover,
+.phoneLink:hover {
+  color: var(--gold-dark);
+  text-decoration: underline;
+}
+
 .linkedBadge {
   font-size: 11px;
   font-weight: 600;
