@@ -74,7 +74,7 @@ export default function FormattedNumberInput({
         disabled={disabled}
         className={className}
         style={{
-          paddingLeft: prefix ? 24 : 8,
+          paddingLeft: prefix ? 14 + prefix.length * 8 : 8,
           width: '100%',
           boxSizing: 'border-box',
           ...style,
