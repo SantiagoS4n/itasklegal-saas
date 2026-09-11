@@ -10,7 +10,6 @@ import { fmtMoney, safeUrl } from '@/utils/format';
 import { exportToCSV } from '@/utils/exportCSV';
 import { useSort } from '@/hooks/useSort';
 import { usePagination } from '@/hooks/usePagination';
-import { dirtyStore } from '@/context/DirtyContext';
 import tableStyles from '@/styles/table.module.css';
 import styles from './Assistants.module.css';
 
@@ -69,6 +68,7 @@ export function Assistants() {
       (a.full_name          || '').toLowerCase().includes(q) ||
       (a.email              || '').toLowerCase().includes(q) ||
       (a.phone              || '').toLowerCase().includes(q) ||
+      (a.WA                 || '').toLowerCase().includes(q) ||
       (a.city               || '').toLowerCase().includes(q) ||
       (a.role               || '').toLowerCase().includes(q) ||
       (a.Id_document        || '').toLowerCase().includes(q) ||
@@ -81,82 +81,6 @@ export function Assistants() {
 
   // 4. Paginación
   const pagination = usePagination(sorted, 25);
-
-  const handleSave = async (btn, row) => {
-    const id = row.dataset.id;
-    const payload = {};
-    row.querySelectorAll('[data-field]').forEach(el => {
-      const f   = el.dataset.field;
-      const val = el.value !== undefined ? el.value : el.innerText.replace(/,/g, '').trim();
-      payload[f] = val === '' ? null : val;
-    });
-    if (payload.contracted === 'Yes') {
-      const REQUIRED = [
-        ['Id_document',    'Document ID'],
-        ['full_name',      'Full Name'],
-        ['email',          'Email'],
-        ['phone',          'Phone'],
-        ['role',           'Role'],
-        ['start_date',     'Start Date'],
-        ['Invoice_amount', 'Invoice Amount'],
-        ['firm_id',        'Firm'],
-        ['hour',           'Hours'],
-      ];
-      const missing = REQUIRED.filter(([f]) => !payload[f]).map(([, label]) => label);
-      if (!payload.pay_cop && !payload.pay_usd) missing.push('Pay COP or Pay USD');
-      if (missing.length) {
-        toast(`⚠️ Required when contracted is Yes: ${missing.join(', ')}`, 'warning');
-        return;
-      }
-    }
-    ['Invoice_amount','pay_cop','pay_usd','hour'].forEach(k => {
-      payload[k] = payload[k] ? parseFloat(payload[k]) || null : null;
-    });
-    payload.firm_id = payload.firm_id || null;
-    btn.classList.remove(tableStyles.dirty);
-    btn.textContent = '…';
-    const { error } = await supabase.from('assistant').update(payload).eq('ID', id);
-    if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
-    toast('✓ Assistant saved');
-    btn.textContent = '✓'; btn.style.background = 'var(--success)';
-    dirtyStore.remove('assistant-' + id);
-    setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; }, 2000);
-
-    // Si contracted pasó de No → Yes, disparar generación de agreement en n8n
-    const prevRecord = all.find(a => String(a.ID) === String(id));
-    if (payload.contracted === 'Yes' && prevRecord?.contracted !== 'Yes') {
-      const agreementUrl = import.meta.env.VITE_N8N_AGREEMENT_WEBHOOK;
-      if (agreementUrl) {
-        fetch(agreementUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-webhook-token': import.meta.env.VITE_N8N_WEBHOOK_TOKEN || '',
-          },
-          body: JSON.stringify({
-            assistant_id: id,
-            full_name: payload.full_name || prevRecord?.full_name || '',
-            firm_id: payload.firm_id,
-            triggered_at: new Date().toISOString(),
-          }),
-        })
-          .then(res => {
-            if (res.ok) toast('✓ Agreement generation triggered');
-            else toast(`⚠️ Agreement webhook responded ${res.status}`, 'warning');
-          })
-          .catch(() => toast('⚠️ Could not reach agreement webhook', 'warning'));
-      }
-    }
-
-    // Actualiza solo la fila guardada, sin tocar ediciones sin guardar de otras filas
-    setAll(prev => prev.map(a => {
-      if (String(a.ID) !== String(id)) return a;
-      const updated = { ...a, ...payload };
-      const firm = firms.find(f => String(f.ID_number) === String(payload.firm_id));
-      updated.law_firm = firm ? { firm_name: firm.firm_name } : null;
-      return updated;
-    }));
-  };
 
   return (
     <div>
@@ -183,6 +107,7 @@ export function Assistants() {
               { key: 'Id_document', label: 'Document' },
               { key: 'full_name', label: 'Name' },
               { key: 'phone', label: 'Phone' },
+              { key: 'WA', label: 'WA' },
               { key: 'email', label: 'Email' },
               { key: 'city', label: 'City' },
               { key: 'role', label: 'Role' },
@@ -235,13 +160,14 @@ export function Assistants() {
 
       {/* Tabla */}
       <div className={tableStyles.tableWrap}>
-        <table className={tableStyles.table} style={{ minWidth: 2400 }}>
+        <table className={tableStyles.table} style={{ minWidth: 2200 }}>
           <thead>
             <tr>
               <SortableTh sortKey="ID"            icon={icon} onToggle={toggle} className={tableStyles.stickyCol}>ID</SortableTh>
               <SortableTh sortKey="Id_document"   icon={icon} onToggle={toggle}>Document</SortableTh>
               <SortableTh sortKey="full_name"     icon={icon} onToggle={toggle}>Name</SortableTh>
               <SortableTh sortKey="phone"         icon={icon} onToggle={toggle}>Phone</SortableTh>
+              <SortableTh sortKey="WA"            icon={icon} onToggle={toggle}>WA</SortableTh>
               <SortableTh sortKey="email"         icon={icon} onToggle={toggle}>Email</SortableTh>
               <SortableTh sortKey="date_of_birth" icon={icon} onToggle={toggle}>Birth Date</SortableTh>
               <SortableTh sortKey="city"          icon={icon} onToggle={toggle}>City</SortableTh>
@@ -262,10 +188,10 @@ export function Assistants() {
             </tr>
           </thead>
           <tbody>
-            {loading && <TableSkeleton rows={8} cols={21} />}
+            {loading && <TableSkeleton rows={8} cols={22} />}
             {!loading && searched.length === 0 && (
               <tr className={tableStyles.stateRow}>
-                <td colSpan={21}>
+                <td colSpan={22}>
                   {search
                     ? `No results for "${search}"`
                     : tab === 'active' ? 'No active assistants yet.' : 'No candidates yet.'}
@@ -276,78 +202,45 @@ export function Assistants() {
               const cvUrl   = safeUrl(a.link_CV);
               const firmUrl = safeUrl(a.Firm_agreement);
               const vaUrl   = safeUrl(a.VA_agreement);
+              const waUrl   = safeUrl(a.WA);
               return (
-                <tr key={a.ID} data-id={a.ID}>
-                  <td className={tableStyles.stickyCol}
-                    onClick={e => e.currentTarget.closest('tr').classList.toggle(tableStyles.selected)}>
-                    {a.ID}
+                <tr key={a.ID}>
+                  <td className={tableStyles.stickyCol}>{a.ID}</td>
+                  <td>{a.Id_document || '—'}</td>
+                  <td className={tableStyles.bold}>{a.full_name || '—'}</td>
+                  <td>{a.phone || '—'}</td>
+                  <td className={tableStyles.linkCell}>
+                    {waUrl
+                      ? <a href={waUrl} target="_blank" rel="noreferrer" className={styles.waLink}>WA</a>
+                      : <span className={tableStyles.noLink}>—</span>}
                   </td>
-                  <EC field="Id_document" value={a.Id_document} />
-                  <EC field="full_name"   value={a.full_name}   bold />
-                  <EC field="phone"       value={a.phone} />
-                  <EC field="email"       value={a.email} />
+                  <td>{a.email || '—'}</td>
+                  <td>{a.date_of_birth || '—'}</td>
+                  <td>{a.city || '—'}</td>
                   <td>
-                    <input className={tableStyles.dateInput} type="date"
-                      data-field="date_of_birth" defaultValue={a.date_of_birth || ''}
-                      onChange={e => markDirty(e.target)} />
-                  </td>
-                  <EC field="city" value={a.city} />
-                  <td>
-                    <select className={`${tableStyles.selInput} ${ROLE_CLASS[a.role] || ''}`}
-                      data-field="role" defaultValue={a.role || ''}
-                      onChange={e => {
-                        const s = e.target;
-                        Object.values(ROLE_CLASS).forEach(c => s.classList.remove(c));
-                        if (ROLE_CLASS[s.value]) s.classList.add(ROLE_CLASS[s.value]);
-                        markDirty(s);
-                      }}>
-                      <option value="">— Role —</option>
-                      <option value="Paralegal">Paralegal</option>
-                      <option value="Virtual Assistant">Virtual Assistant</option>
-                      <option value="Case Manager">Case Manager</option>
-                    </select>
+                    {a.role
+                      ? <span className={`${tableStyles.selInput} ${ROLE_CLASS[a.role] || ''}`} style={{ display: 'inline-block' }}>{a.role}</span>
+                      : '—'}
                   </td>
                   <td className={tableStyles.linkCell}>
                     {cvUrl
                       ? <a href={cvUrl} target="_blank" rel="noreferrer">View CV</a>
                       : <span className={tableStyles.noLink}>—</span>}
                   </td>
-                  <MoneyEC field="Invoice_amount" value={fmtMoney(a.Invoice_amount)} />
-                  <MoneyEC field="pay_cop"        value={fmtMoney(a.pay_cop)} />
-                  <MoneyEC field="pay_usd"        value={fmtMoney(a.pay_usd)} />
+                  <td>{fmtMoney(a.Invoice_amount) || '—'}</td>
+                  <td>{fmtMoney(a.pay_cop) || '—'}</td>
+                  <td>{fmtMoney(a.pay_usd) || '—'}</td>
+                  <td>{a.start_date || '—'}</td>
+                  <td>{a.law_firm?.firm_name || '—'}</td>
+                  <td>{a.hour ?? '—'}</td>
+                  <td className={tableStyles.wide}>{a.notes || '—'}</td>
+                  <td>{a.refer_by || '—'}</td>
                   <td>
-                    <input className={tableStyles.dateInput} type="date"
-                      data-field="start_date" defaultValue={a.start_date || ''}
-                      onChange={e => markDirty(e.target)} />
-                  </td>
-                  <td>
-                    <select className={tableStyles.selInput} data-field="firm_id"
-                      defaultValue={a.firm_id || ''}
-                      onChange={e => markDirty(e.target)}>
-                      <option value="">— Firm —</option>
-                      {firms.map(f => (
-                        <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <EC field="hour"     value={a.hour ?? ''} />
-                  <EC field="notes"    value={a.notes}      wide />
-                  <EC field="refer_by" value={a.refer_by} />
-                  <td>
-                    <select
+                    <span
                       className={`${tableStyles.selInput} ${a.contracted === 'Yes' ? tableStyles.contrYes : tableStyles.contrNo}`}
-                      data-field="contracted"
-                      defaultValue={a.contracted || 'No'}
-                      style={{ minWidth: 75, width: 75, textAlign: 'center' }}
-                      onChange={e => {
-                        const s = e.target;
-                        s.classList.toggle(tableStyles.contrYes, s.value === 'Yes');
-                        s.classList.toggle(tableStyles.contrNo,  s.value !== 'Yes');
-                        markDirty(s);
-                      }}>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
+                      style={{ display: 'inline-block', minWidth: 75, textAlign: 'center' }}>
+                      {a.contracted || 'No'}
+                    </span>
                   </td>
                   <td className={tableStyles.linkCell}>
                     {firmUrl
@@ -360,9 +253,8 @@ export function Assistants() {
                       : <span className={tableStyles.noLink}>—</span>}
                   </td>
                   <td className={tableStyles.actCol}>
-                    <button className={tableStyles.saveBtn}
-                      onClick={e => handleSave(e.currentTarget, e.currentTarget.closest('tr'))}>
-                      Save
+                    <button className={styles.editBtn} onClick={() => setModal({ open: true, data: a })}>
+                      Edit
                     </button>
                   </td>
                 </tr>
@@ -385,76 +277,31 @@ export function Assistants() {
   );
 }
 
-function EC({ field, value, bold, wide }) {
-  const cls = [
-    tableStyles.editable,
-    bold ? tableStyles.bold : '',
-    wide ? tableStyles.wide : '',
-  ].filter(Boolean).join(' ');
-  return (
-    <td>
-      <div className={cls} contentEditable suppressContentEditableWarning
-        data-field={field} onInput={e => markDirty(e.target)}>
-        {value ?? ''}
-      </div>
-    </td>
-  );
-}
-
-// Igual que EC, pero reformatea con separadores de miles mientras el usuario escribe.
-function MoneyEC({ field, value, bold, wide }) {
-  const cls = [
-    tableStyles.editable,
-    bold ? tableStyles.bold : '',
-    wide ? tableStyles.wide : '',
-  ].filter(Boolean).join(' ');
-
-  const handleInput = e => {
-    const el = e.target;
-    let raw = el.innerText.replace(/[^\d.]/g, '');
-    const parts = raw.split('.');
-    if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('').slice(0, 2);
-    else if (parts[1]) raw = parts[0] + '.' + parts[1].slice(0, 2);
-
-    const [intPart, decPart] = raw.split('.');
-    const intFormatted = intPart ? new Intl.NumberFormat('en-US').format(Number(intPart)) : '';
-    const formatted = raw.includes('.') ? `${intFormatted || '0'}.${decPart ?? ''}` : intFormatted;
-
-    if (el.innerText !== formatted) {
-      el.innerText = formatted;
-      // mover cursor al final
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-    markDirty(el);
-  };
-
-  return (
-    <td>
-      <div className={cls} contentEditable suppressContentEditableWarning
-        data-field={field} onInput={handleInput}>
-        {value ?? ''}
-      </div>
-    </td>
-  );
-}
-
-function markDirty(el) {
-  const row = el.closest('tr');
-  if (!row) return;
-  row.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty);
-  const id = row.dataset.id;
-  if (id) dirtyStore.add('assistant-' + id);
-}
+const REQUIRED_WHEN_CONTRACTED = [
+  ['Id_document',    'Document ID'],
+  ['email',          'Email'],
+  ['phone',          'Phone'],
+  ['role',           'Role'],
+  ['start_date',     'Start Date'],
+  ['Invoice_amount', 'Invoice Amount'],
+  ['firm_id',        'Firm'],
+  ['hour',           'Hours'],
+];
 
 function AssistantModal({ open, initial, firms, onClose, onSaved }) {
   const toast = useAppToast();
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+
+  // Campos obligatorios que faltan por llenar (solo aplica si Contracted = Yes)
+  const missing = useMemo(() => {
+    if (form.contracted !== 'Yes') return new Set();
+    const s = new Set(REQUIRED_WHEN_CONTRACTED.filter(([f]) => !form[f]).map(([f]) => f));
+    if (!form.pay_cop && !form.pay_usd) { s.add('pay_cop'); s.add('pay_usd'); }
+    return s;
+  }, [form]);
+  const errStyle = f => missing.has(f) ? { borderColor: 'var(--danger)' } : undefined;
+  const mark = (label, f) => missing.has(f) ? `${label} *` : label;
 
   useEffect(() => {
     if (!open) return;
@@ -485,29 +332,18 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
   const submit = async () => {
     if (!form.name && !form.lastName) { toast('⚠️ Name is required', 'warning'); return; }
 
-    if (form.contracted === 'Yes') {
-      const REQUIRED = [
-        ['Id_document',    'Document ID'],
-        ['email',          'Email'],
-        ['phone',          'Phone'],
-        ['role',           'Role'],
-        ['start_date',     'Start Date'],
-        ['Invoice_amount', 'Invoice Amount'],
-        ['firm_id',        'Firm'],
-        ['hour',           'Hours'],
-      ];
-      const missing = REQUIRED.filter(([f]) => !form[f]).map(([, label]) => label);
-      if (!form.pay_cop && !form.pay_usd) missing.push('Pay COP or Pay USD');
-      if (missing.length) {
-        toast(`⚠️ Required when contracted is Yes: ${missing.join(', ')}`, 'warning');
-        return;
-      }
+    if (missing.size > 0) {
+      const labels = REQUIRED_WHEN_CONTRACTED.filter(([f]) => missing.has(f)).map(([, l]) => l);
+      if (missing.has('pay_cop')) labels.push('Pay COP or Pay USD');
+      toast(`⚠️ Required when contracted is Yes: ${labels.join(', ')}`, 'warning');
+      return;
     }
 
     setSaving(true);
     const payload = {
       ...form,
       full_name:      `${form.name} ${form.lastName}`.trim(),
+      Id_document:    form.Id_document.replace(/[.,]/g, '') || null,
       firm_id:        form.firm_id        || null,
       date_of_birth:  form.date_of_birth  || null,
       start_date:     form.start_date     || null,
@@ -522,26 +358,58 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
     setSaving(false);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
     toast(initial ? '✓ Assistant updated' : '✓ Assistant created');
+
+    // Si contracted pasó de No → Yes, disparar generación de agreement en n8n
+    if (initial && payload.contracted === 'Yes' && initial.contracted !== 'Yes') {
+      const agreementUrl = import.meta.env.VITE_N8N_AGREEMENT_WEBHOOK;
+      if (agreementUrl) {
+        fetch(agreementUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-webhook-token': import.meta.env.VITE_N8N_WEBHOOK_TOKEN || '',
+          },
+          body: JSON.stringify({
+            assistant_id: initial.ID,
+            full_name: payload.full_name,
+            firm_id: payload.firm_id,
+            triggered_at: new Date().toISOString(),
+          }),
+        })
+          .then(res => {
+            if (res.ok) toast('✓ Agreement generation triggered');
+            else toast(`⚠️ Agreement webhook responded ${res.status}`, 'warning');
+          })
+          .catch(() => toast('⚠️ Could not reach agreement webhook', 'warning'));
+      }
+    }
+
     onSaved();
   };
 
   return (
     <Modal open={open} title={initial ? 'Edit Assistant' : 'New Assistant'} onClose={onClose} maxWidth={560}>
+      {form.contracted === 'Yes' && missing.size > 0 && (
+        <p style={{ color: 'var(--danger)', fontSize: 12, fontWeight: 600, margin: '0 0 8px' }}>
+          ⚠️ Los campos marcados con * son obligatorios porque Contracted está en "Yes".
+        </p>
+      )}
       <ModalGrid>
+        <div className={styles.sectionTitle}>Personal Info</div>
         <Field label="First Name *">
           <Input value={form.name} onChange={set('name')} placeholder="María" />
         </Field>
         <Field label="Last Name *">
           <Input value={form.lastName} onChange={set('lastName')} placeholder="García" />
         </Field>
-        <Field label="Document ID">
-          <Input value={form.Id_document} onChange={set('Id_document')} placeholder="CC 12345678" />
+        <Field label={mark('Document ID', 'Id_document')}>
+          <Input value={form.Id_document} onChange={set('Id_document')} placeholder="CC 12345678" style={errStyle('Id_document')} />
         </Field>
-        <Field label="Phone">
-          <Input value={form.phone} onChange={set('phone')} placeholder="+57 300 000 0000" />
+        <Field label={mark('Phone', 'phone')}>
+          <Input value={form.phone} onChange={set('phone')} placeholder="+57 300 000 0000" style={errStyle('phone')} />
         </Field>
-        <Field label="Email" className="full">
-          <Input type="email" value={form.email} onChange={set('email')} placeholder="maria@email.com" />
+        <Field label={mark('Email', 'email')} className="full">
+          <Input type="email" value={form.email} onChange={set('email')} placeholder="maria@email.com" style={errStyle('email')} />
         </Field>
         <Field label="City">
           <Input value={form.city} onChange={set('city')} placeholder="Bogotá" />
@@ -549,34 +417,24 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
         <Field label="Birth Date">
           <Input type="date" value={form.date_of_birth} onChange={set('date_of_birth')} />
         </Field>
-        <Field label="Role">
-          <Select value={form.role} onChange={set('role')}>
+
+        <div className={styles.sectionTitle}>Employment</div>
+        <Field label={mark('Role', 'role')}>
+          <Select value={form.role} onChange={set('role')} style={errStyle('role')}>
             <option value="">— Select —</option>
             <option value="Paralegal">Paralegal</option>
             <option value="Virtual Assistant">Virtual Assistant</option>
             <option value="Case Manager">Case Manager</option>
           </Select>
         </Field>
-        <Field label="Law Firm">
-          <Select value={form.firm_id} onChange={set('firm_id')}>
+        <Field label={mark('Law Firm', 'firm_id')}>
+          <Select value={form.firm_id} onChange={set('firm_id')} style={errStyle('firm_id')}>
             <option value="">— Select firm —</option>
             {firms.map(f => <option key={f.ID_number} value={f.ID_number}>{f.firm_name}</option>)}
           </Select>
         </Field>
-        <Field label="Start Date">
-          <Input type="date" value={form.start_date} onChange={set('start_date')} />
-        </Field>
-        <Field label="Invoice Amt (USD)">
-          <FormattedNumberInput value={form.Invoice_amount} onChange={setNum('Invoice_amount')} prefix="US$" placeholder="0" />
-        </Field>
-        <Field label="Pay COP">
-          <FormattedNumberInput value={form.pay_cop} onChange={setNum('pay_cop')} prefix="$" placeholder="0" />
-        </Field>
-        <Field label="Pay USD">
-          <FormattedNumberInput value={form.pay_usd} onChange={setNum('pay_usd')} prefix="US$" placeholder="0" />
-        </Field>
-        <Field label="Hours / Week">
-          <Input type="number" value={form.hour} onChange={set('hour')} placeholder="40" />
+        <Field label={mark('Start Date', 'start_date')}>
+          <Input type="date" value={form.start_date} onChange={set('start_date')} style={errStyle('start_date')} />
         </Field>
         <Field label="Contracted">
           <Select value={form.contracted} onChange={set('contracted')}>
@@ -584,16 +442,32 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
             <option value="Yes">Yes</option>
           </Select>
         </Field>
-        <Field label="Referred By">
+        <Field label="Referred By" className="full">
           <Input value={form.refer_by} onChange={set('refer_by')} placeholder="Name" />
         </Field>
+
+        <div className={styles.sectionTitle}>Compensation</div>
+        <Field label={mark('Invoice Amt (USD)', 'Invoice_amount')}>
+          <FormattedNumberInput value={form.Invoice_amount} onChange={setNum('Invoice_amount')} prefix="US$" placeholder="0" style={errStyle('Invoice_amount')} />
+        </Field>
+        <Field label={mark('Hours / Week', 'hour')}>
+          <Input type="number" value={form.hour} onChange={set('hour')} placeholder="40" style={errStyle('hour')} />
+        </Field>
+        <Field label={mark('Pay COP', 'pay_cop')}>
+          <FormattedNumberInput value={form.pay_cop} onChange={setNum('pay_cop')} prefix="$" placeholder="0" style={errStyle('pay_cop')} />
+        </Field>
+        <Field label={mark('Pay USD', 'pay_usd')}>
+          <FormattedNumberInput value={form.pay_usd} onChange={setNum('pay_usd')} prefix="US$" placeholder="0" style={errStyle('pay_usd')} />
+        </Field>
+
+        <div className={styles.sectionTitle}>Notes</div>
         <Field label="Notes" className="full">
           <Input value={form.notes} onChange={set('notes')} placeholder="Additional notes…" />
         </Field>
       </ModalGrid>
       <ModalActions>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
-        <Button variant="primary" loading={saving} onClick={submit}>
+        <Button variant="primary" loading={saving} disabled={missing.size > 0} onClick={submit}>
           {initial ? 'Save Changes' : 'Create Assistant'}
         </Button>
       </ModalActions>

@@ -32,6 +32,38 @@
 .tabActive { background: var(--gold-muted); border-color: var(--gold); color: var(--gold-dark); font-weight: 600; }
 .tabCount { background: var(--border); color: var(--text-2); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
 
+/* ── Botón Edit ── */
+.editBtn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-dark);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.editBtn:hover { background: var(--gold); color: white; }
+
+/* ── Secciones del modal ── */
+.sectionTitle {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--gold-dark);
+  margin: 18px 0 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.sectionTitle:first-child { margin-top: 0; }
+
+/* ── Enlace WA ── */
+.waLink { color: #52b434 !important; }
+.waLink:hover { background: rgba(82, 180, 52, 0.1) !important; }
+
 /* ── Filtro por firma ── */
 .firmFilter { margin-left: auto; padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.18s; min-width: 180px; }
 .firmFilter:focus { border-color: var(--gold); }

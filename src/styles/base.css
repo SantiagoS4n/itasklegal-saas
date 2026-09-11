@@ -38,8 +38,13 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Usada por Field (componentes de modal) para ocupar el ancho completo del grid */
+.full {
+  grid-column: 1 / -1;
+}
+
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }

@@ -111,7 +111,12 @@ tbody tr:hover .actCol { background: #fafafa; }
   transition: background 0.18s; white-space: nowrap;
 }
 .saveBtn:hover { background: var(--gold-dark); }
-.dirty { background: var(--blue) !important; animation: pulse 1.5s infinite; }
+.dirty { background: var(--danger) !important; animation: dirtyPulse 1.3s ease-in-out infinite; }
+@keyframes dirtyPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,59,48,0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(255,59,48,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
+}
 
 .deleteBtn {
   padding: 6px 9px; background: transparent; color: var(--text-3);
