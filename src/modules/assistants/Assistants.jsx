@@ -87,7 +87,6 @@ export function Assistants() {
   const tableWrapRef  = useRef(null);
   const stickyBarRef  = useRef(null);
   const stickySpacerRef = useRef(null);
-  const syncingRef = useRef(false);
 
   useEffect(() => {
     const tableWrap = tableWrapRef.current;
@@ -98,21 +97,26 @@ export function Assistants() {
     const matchWidth = () => { spacer.style.width = tableWrap.scrollWidth + 'px'; };
     matchWidth();
 
+    // rAF-throttled: escribir scrollLeft en cada evento de scroll (que dispara
+    // muy seguido) causaba un lag notorio; con esto se agrupa por frame.
+    let rafId = null;
     const fromTable = () => {
-      if (syncingRef.current) return;
-      syncingRef.current = true;
-      stickyBar.scrollLeft = tableWrap.scrollLeft;
-      syncingRef.current = false;
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        stickyBar.scrollLeft = tableWrap.scrollLeft;
+        rafId = null;
+      });
     };
     const fromBar = () => {
-      if (syncingRef.current) return;
-      syncingRef.current = true;
-      tableWrap.scrollLeft = stickyBar.scrollLeft;
-      syncingRef.current = false;
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        tableWrap.scrollLeft = stickyBar.scrollLeft;
+        rafId = null;
+      });
     };
 
-    tableWrap.addEventListener('scroll', fromTable);
-    stickyBar.addEventListener('scroll', fromBar);
+    tableWrap.addEventListener('scroll', fromTable, { passive: true });
+    stickyBar.addEventListener('scroll', fromBar, { passive: true });
     const ro = new ResizeObserver(matchWidth);
     ro.observe(tableWrap);
 
@@ -120,6 +124,7 @@ export function Assistants() {
       tableWrap.removeEventListener('scroll', fromTable);
       stickyBar.removeEventListener('scroll', fromBar);
       ro.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [loading, pagination.paginated]);
 
