@@ -67,6 +67,33 @@
   box-shadow: 0 0 0 3px var(--gold-ring);
 }
 
+/* ── SearchSelect ── */
+.searchSelect { position: relative; }
+.searchSelectMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+}
+.searchSelectOption {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.searchSelectOption:hover { background: var(--gold-muted); }
+.searchSelectEmpty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
 /* ── Modal grid ── */
 .modalGrid {
   display: grid;

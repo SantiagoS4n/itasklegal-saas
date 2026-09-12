@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { Modal } from '@/components/ui/Modal';
@@ -82,6 +82,47 @@ export function Assistants() {
   // 4. Paginación
   const pagination = usePagination(sorted, 25);
 
+  // Barra de scroll horizontal fija abajo, para no tener que bajar hasta el
+  // final de la tabla solo para moverse a los lados (mouse sin trackpad).
+  const tableWrapRef  = useRef(null);
+  const stickyBarRef  = useRef(null);
+  const stickySpacerRef = useRef(null);
+  const syncingRef = useRef(false);
+
+  useEffect(() => {
+    const tableWrap = tableWrapRef.current;
+    const stickyBar = stickyBarRef.current;
+    const spacer    = stickySpacerRef.current;
+    if (!tableWrap || !stickyBar || !spacer) return;
+
+    const matchWidth = () => { spacer.style.width = tableWrap.scrollWidth + 'px'; };
+    matchWidth();
+
+    const fromTable = () => {
+      if (syncingRef.current) return;
+      syncingRef.current = true;
+      stickyBar.scrollLeft = tableWrap.scrollLeft;
+      syncingRef.current = false;
+    };
+    const fromBar = () => {
+      if (syncingRef.current) return;
+      syncingRef.current = true;
+      tableWrap.scrollLeft = stickyBar.scrollLeft;
+      syncingRef.current = false;
+    };
+
+    tableWrap.addEventListener('scroll', fromTable);
+    stickyBar.addEventListener('scroll', fromBar);
+    const ro = new ResizeObserver(matchWidth);
+    ro.observe(tableWrap);
+
+    return () => {
+      tableWrap.removeEventListener('scroll', fromTable);
+      stickyBar.removeEventListener('scroll', fromBar);
+      ro.disconnect();
+    };
+  }, [loading, pagination.paginated]);
+
   return (
     <div>
       {/* Header */}
@@ -159,7 +200,7 @@ export function Assistants() {
       </div>
 
       {/* Tabla */}
-      <div className={tableStyles.tableWrap}>
+      <div className={`${tableStyles.tableWrap} ${styles.hideNativeScroll}`} ref={tableWrapRef}>
         <table className={tableStyles.table} style={{ minWidth: 2200 }}>
           <thead>
             <tr>
@@ -262,6 +303,10 @@ export function Assistants() {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className={styles.stickyHScroll} ref={stickyBarRef}>
+        <div ref={stickySpacerRef} style={{ height: 1 }} />
       </div>
 
       <Pagination {...pagination} />

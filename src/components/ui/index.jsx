@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import styles from './ui.module.css';
 
 export function Spinner({ size = 18 }) {
@@ -35,6 +36,69 @@ export function Input({ className = '', ...props }) {
 
 export function Select({ className = '', children, ...props }) {
   return <select className={`${styles.select} ${className}`} {...props}>{children}</select>;
+}
+
+/**
+ * Dropdown con búsqueda por texto, para listas largas donde un <select>
+ * nativo se vuelve incómodo de recorrer (ej. asignar a un asistente).
+ */
+export function SearchSelect({
+  value, onChange, options,
+  getOptionValue = o => o.value,
+  getOptionLabel = o => o.label,
+  placeholder = 'Search…',
+  emptyText = 'No results',
+  className = '',
+}) {
+  const [query, setQuery] = useState('');
+  const [open,  setOpen]  = useState(false);
+  const wrapRef = useRef(null);
+
+  const selected = options.find(o => String(getOptionValue(o)) === String(value));
+
+  useEffect(() => {
+    if (!open) setQuery(selected ? getOptionLabel(selected) : '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, open]);
+
+  useEffect(() => {
+    const onDocMouseDown = e => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, []);
+
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? options.filter(o => getOptionLabel(o).toLowerCase().includes(q))
+    : options;
+
+  return (
+    <div className={`${styles.searchSelect} ${className}`} ref={wrapRef}>
+      <input
+        className={styles.input}
+        value={query}
+        placeholder={placeholder}
+        onFocus={() => setOpen(true)}
+        onChange={e => { setQuery(e.target.value); setOpen(true); }}
+      />
+      {open && (
+        <div className={styles.searchSelectMenu}>
+          {filtered.length === 0 && <div className={styles.searchSelectEmpty}>{emptyText}</div>}
+          {filtered.map(o => (
+            <div
+              key={getOptionValue(o)}
+              className={styles.searchSelectOption}
+              onMouseDown={() => { onChange(getOptionValue(o)); setOpen(false); }}
+            >
+              {getOptionLabel(o)}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function ModalGrid({ children }) {

@@ -64,6 +64,26 @@
 .waLink { color: #52b434 !important; }
 .waLink:hover { background: rgba(82, 180, 52, 0.1) !important; }
 
+/* Oculta el scrollbar nativo de la tabla: la barra fija de abajo lo reemplaza */
+.hideNativeScroll {
+  scrollbar-width: none; /* Firefox */
+}
+.hideNativeScroll::-webkit-scrollbar {
+  display: none; /* Chrome / Safari */
+}
+
+/* ── Barra de scroll horizontal fija abajo ── */
+.stickyHScroll {
+  position: sticky;
+  bottom: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 14px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 5;
+}
+
 /* ── Filtro por firma ── */
 .firmFilter { margin-left: auto; padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.18s; min-width: 180px; }
 .firmFilter:focus { border-color: var(--gold); }

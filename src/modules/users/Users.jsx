@@ -153,11 +153,6 @@ export function Users() {
                       onClick={() => setModal({ open: true, mode: 'edit', data: u })}>
                       Edit
                     </button>
-                    <button className={tableStyles.deleteBtn}
-                      disabled={deleting === u.id}
-                      onClick={() => handleDelete(u)}>
-                      {deleting === u.id ? '…' : '✕'}
-                    </button>
                   </div>
                 </td>
               </tr>

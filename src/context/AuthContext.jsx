@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 const AuthContext = createContext(null);
@@ -7,6 +7,13 @@ export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // El listener de abajo se suscribe una sola vez (deps []), así que no ve
+  // los valores actualizados de user/profile por closure — se leen de refs.
+  const userRef = useRef(null);
+  const profileRef = useRef(null);
+  useEffect(() => { userRef.current = user; }, [user]);
+  useEffect(() => { profileRef.current = profile; }, [profile]);
 
   const fetchProfile = async (userId) => {
     const { data } = await supabase
@@ -33,8 +40,15 @@ export function AuthProvider({ children }) {
           setLoading(false);
           return;
         }
-        // Login real → esperar el perfil antes de destrabar rutas
-        if (event === 'SIGNED_IN') {
+        // Supabase re-emite SIGNED_IN para el MISMO usuario al volver a la
+        // pestaña (auto-refresh por visibilidad) — si ya lo teníamos con su
+        // perfil cargado, es solo un refresco de sesión: no bloquear ni
+        // desmontar la app entera (AdminRoute devuelve null si loading=true).
+        const sameUser = userRef.current && session?.user && userRef.current.id === session.user.id;
+        if (event === 'SIGNED_IN' && sameUser && profileRef.current) {
+          setUser(session.user);
+        } else if (event === 'SIGNED_IN') {
+          // Login real → esperar el perfil antes de destrabar rutas
           setLoading(true);
           setUser(session?.user ?? null);
           if (session?.user) await fetchProfile(session.user.id);

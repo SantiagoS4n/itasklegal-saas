@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { Modal } from '@/components/ui/Modal';
-import { Button, Field, Select, ModalActions, SortableTh } from '@/components/ui/index';
+import { Button, Field, SearchSelect, ModalActions, SortableTh } from '@/components/ui/index';
 import { useSort } from '@/hooks/useSort';
 import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/ui/Pagination';
@@ -204,10 +204,14 @@ function AliasModal({ open, recipientRaw, assistants, onClose, onSave }) {
         <div className={styles.aliasNote}>This will create a permanent alias. All future payments with this exact recipient name will resolve automatically.</div>
       </div>
       <Field label="Assign to Assistant">
-        <Select value={assistantId} onChange={e => setAssistantId(e.target.value)}>
-          <option value="">— Select assistant —</option>
-          {assistants.map(a => <option key={a.ID} value={a.ID}>{a.full_name}</option>)}
-        </Select>
+        <SearchSelect
+          value={assistantId}
+          onChange={setAssistantId}
+          options={assistants}
+          getOptionValue={a => a.ID}
+          getOptionLabel={a => a.full_name}
+          placeholder="Search assistant by name…"
+        />
       </Field>
       <ModalActions>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>

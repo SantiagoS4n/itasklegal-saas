@@ -307,14 +307,7 @@ export function Invoices() {
                     : <span className={tableStyles.noLink}>—</span>}
                 </td>
 
-                <td className={tableStyles.actCol}>
-                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                    <button className={tableStyles.deleteBtn}
-                      onClick={() => handleDelete(inv.invoice_number)}>
-                      ✕
-                    </button>
-                  </div>
-                </td>
+                <td className={tableStyles.actCol}></td>
               </tr>
             ))}
           </tbody>
