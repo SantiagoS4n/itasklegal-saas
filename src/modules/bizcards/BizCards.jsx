@@ -322,14 +322,14 @@ export function BizCards() {
   );
 }
 
-const DEFAULT_SUBJECT = 'Reconectemos — iTaskLegal';
-const DEFAULT_BODY = `Hola {{full_name}},
+const DEFAULT_SUBJECT = 'iTaskLegal';
+const DEFAULT_BODY = `Hello {{full_name}},
 
-Fue un gusto coincidir contigo. Quería retomar el contacto y contarte un poco más sobre cómo trabajamos en iTaskLegal.
+It was a pleasure meeting you. I wanted to reconnect and share a bit more about how we work at iTaskLegal.
 
-Quedo atento a cualquier pregunta.
+Happy to answer any questions.
 
-Saludos,
+Best,
 Santiago`;
 
 /**

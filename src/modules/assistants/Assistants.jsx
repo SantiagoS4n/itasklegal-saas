@@ -412,7 +412,9 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
     // Si contracted pasó de No → Yes, disparar generación de agreement en n8n
     if (initial && payload.contracted === 'Yes' && initial.contracted !== 'Yes') {
       const agreementUrl = import.meta.env.VITE_N8N_AGREEMENT_WEBHOOK;
-      if (agreementUrl) {
+      if (!agreementUrl) {
+        toast('❌ Agreement webhook not configured (VITE_N8N_AGREEMENT_WEBHOOK)', 'error');
+      } else {
         fetch(agreementUrl, {
           method: 'POST',
           headers: {
@@ -441,7 +443,7 @@ function AssistantModal({ open, initial, firms, onClose, onSaved }) {
     <Modal open={open} title={initial ? 'Edit Assistant' : 'New Assistant'} onClose={onClose} maxWidth={560}>
       {form.contracted === 'Yes' && missing.size > 0 && (
         <p style={{ color: 'var(--danger)', fontSize: 12, fontWeight: 600, margin: '0 0 8px' }}>
-          ⚠️ Los campos marcados con * son obligatorios porque Contracted está en "Yes".
+          ⚠️ Fields marked with * are required because Contracted is set to "Yes".
         </p>
       )}
       <ModalGrid>
