@@ -50,18 +50,18 @@ export function Assistants() {
 
   useEffect(() => { load(); }, []);
 
-  // 1. Separar por tab
-  const active   = all.filter(a => a.contracted === 'Yes');
-  const pipeline = all.filter(a => a.contracted !== 'Yes');
-  const byTab    = tab === 'active' ? active : pipeline;
+  // Solo para los contadores de las pestañas — independiente del tab activo.
+  const active   = useMemo(() => all.filter(a => a.contracted === 'Yes'), [all]);
+  const pipeline = useMemo(() => all.filter(a => a.contracted !== 'Yes'), [all]);
 
-  // 2. Filtrar por firma (solo active)
-  const byFirm = tab === 'active' && firmFilter
-    ? byTab.filter(a => String(a.firm_id) === firmFilter)
-    : byTab;
-
-  // 3. Filtrar por búsqueda
+  // Separar por tab → filtrar por firma → filtrar por búsqueda, todo en un
+  // solo useMemo para que no se recalcule (ni se rompa la memoización del
+  // sort de abajo) en renders que no tocan `all`/`tab`/`firmFilter`/`search`.
   const searched = useMemo(() => {
+    const byTab = all.filter(a => tab === 'active' ? a.contracted === 'Yes' : a.contracted !== 'Yes');
+    const byFirm = tab === 'active' && firmFilter
+      ? byTab.filter(a => String(a.firm_id) === firmFilter)
+      : byTab;
     const q = search.toLowerCase().trim();
     if (!q) return byFirm;
     return byFirm.filter(a =>
@@ -74,7 +74,7 @@ export function Assistants() {
       (a.Id_document        || '').toLowerCase().includes(q) ||
       (a.law_firm?.firm_name|| '').toLowerCase().includes(q)
     );
-  }, [byFirm, search]);
+  }, [all, tab, firmFilter, search]);
 
   // 4. Ordenar por columna
   const { sorted, toggle, icon } = useSort(searched, 'ID', 'desc');

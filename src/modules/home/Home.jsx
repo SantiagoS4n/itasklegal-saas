@@ -20,10 +20,10 @@ export function Home() {
     const monthStart = today.slice(0, 7) + '-01';
 
     const [
-      asRes, firmRes, invRes, remRes, upcomingRes, monthInvRes, monthPayRes
+      asRes, cardRes, invRes, remRes, upcomingRes, monthInvRes, monthPayRes
     ] = await Promise.all([
       supabase.from('assistant').select('ID, contracted'),
-      supabase.from('law_firm').select('ID_number'),
+      supabase.from('bussinescard').select('ID'),
       supabase.from('invoice').select('amount, status'),
       supabase.from('remitly').select('ID', { count: 'exact' }).is('assistant_id', null),
       supabase.from('invoice')
@@ -48,7 +48,7 @@ export function Home() {
 
     const active       = assistants.filter(a => a.contracted === 'Yes').length;
     const candidates   = assistants.filter(a => a.contracted !== 'Yes').length;
-    const totalFirms   = (firmRes.data || []).length;
+    const totalCards   = (cardRes.data || []).length;
     const unmatched    = remRes.count || 0;
 
     const totalInvoiced  = invoices.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
@@ -62,7 +62,7 @@ export function Home() {
     const monthMargin    = monthCollected - monthSent;
 
     setData({
-      active, candidates, totalFirms, unmatched,
+      active, candidates, totalCards, unmatched,
       totalInvoiced, totalPaid, totalPending, totalOverdue,
       monthBilled, monthCollected, monthSent, monthMargin,
       upcoming: upcomingRes.data || [],
@@ -112,7 +112,7 @@ export function Home() {
       <div className={styles.sectionLabel}>Team</div>
       <div className={styles.kpiGrid}>
         <KpiCard icon="👤" label="Active Assistants" value={data.active} sub={`${data.candidates} candidates`} accent="gold" onClick={() => navigate('/assistants')} />
-        <KpiCard icon="⚖️" label="Law Firms" value={data.totalFirms} sub="client firms" onClick={() => navigate('/law-firms')} />
+        <KpiCard icon="📇" label="Business Cards" value={data.totalCards} sub="contacts" onClick={() => navigate('/biz-cards')} />
         <KpiCard icon="💸" label="Unmatched Payments" value={data.unmatched} sub={data.unmatched > 0 ? 'need assignment' : 'all matched ✓'} accent={data.unmatched > 0 ? 'danger' : 'success'} onClick={() => navigate('/payments')} />
         <KpiCard icon="📊" label="This Month Margin" value={`$${fmtMoney(data.monthMargin)}`} sub={`$${fmtMoney(data.monthCollected)} collected — $${fmtMoney(data.monthSent)} sent`} accent={data.monthMargin >= 0 ? 'success' : 'danger'} onClick={() => navigate('/analytics')} />
       </div>

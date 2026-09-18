@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
 import { Modal } from '@/components/ui/Modal';
@@ -36,9 +36,11 @@ export function Payments() {
 
   useEffect(() => { load(); }, []);
 
-  const pending = payments.filter(p => !p.assistant_id);
-  const baseTab = tab === 'unmatched' ? pending : payments;
-  const base    = filterByMonth(baseTab, 'Date', monthFilter);
+  const pending = useMemo(() => payments.filter(p => !p.assistant_id), [payments]);
+  const base = useMemo(() => {
+    const baseTab = tab === 'unmatched' ? pending : payments;
+    return filterByMonth(baseTab, 'Date', monthFilter);
+  }, [tab, pending, payments, monthFilter]);
 
   const { sorted, toggle, icon } = useSort(base, 'Date', 'desc');
   const pagination = usePagination(sorted, 25);

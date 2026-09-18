@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { useAppToast } from '@/components/layout/AppLayout';
@@ -109,10 +109,15 @@ export function BizCards() {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = cards.filter(c => {
+  // Memoizado para que no se recalcule (ni rompa la memoización del sort de
+  // abajo) en renders que no tocan `cards`/`search` — por ejemplo, al abrir
+  // el menú "⋮" de una fila.
+  const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return !q || (c.full_name||'').toLowerCase().includes(q) || (c.company||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q) || (c.job_title||'').toLowerCase().includes(q) || (c.notes||'').toLowerCase().includes(q);
-  });
+    return cards.filter(c =>
+      !q || (c.full_name||'').toLowerCase().includes(q) || (c.company||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q) || (c.job_title||'').toLowerCase().includes(q) || (c.notes||'').toLowerCase().includes(q)
+    );
+  }, [cards, search]);
 
   const { sorted, toggle, icon } = useSort(filtered, 'ID', 'desc');
   const pagination = usePagination(sorted, 25);
@@ -486,13 +491,15 @@ function EmailHistoryTable({ toast }) {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = logs.filter(l => {
+  const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return !q
+    return logs.filter(l =>
+      !q
       || (l.recipient_name  || '').toLowerCase().includes(q)
       || (l.recipient_email || '').toLowerCase().includes(q)
-      || (l.subject         || '').toLowerCase().includes(q);
-  });
+      || (l.subject         || '').toLowerCase().includes(q)
+    );
+  }, [logs, search]);
 
   const { sorted, toggle, icon } = useSort(filtered, 'sent_at', 'desc');
   const pagination = usePagination(sorted, 25);
