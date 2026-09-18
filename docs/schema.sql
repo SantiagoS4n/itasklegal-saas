@@ -95,6 +95,7 @@ create table public.law_firm (
   notes text null,
   contact_name text null,
   slug text null,
+  billing_anchor_day integer null, -- day of month (1-31) the billing cycle anchors to
   constraint law_firm_pkey primary key ("ID_number") -- inferred
 ) TABLESPACE pg_default;
 

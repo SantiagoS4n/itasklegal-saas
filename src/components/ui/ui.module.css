@@ -50,8 +50,8 @@
   margin-top: 12px;
 }
 
-/* ── Input / Select ── */
-.input, .select {
+/* ── Input / Select / Textarea ── */
+.input, .select, .textarea {
   width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--border);
@@ -62,9 +62,15 @@
   outline: none;
   transition: border-color 0.18s, box-shadow 0.18s;
 }
-.input:focus, .select:focus {
+.input:focus, .select:focus, .textarea:focus {
   border-color: var(--gold);
   box-shadow: 0 0 0 3px var(--gold-ring);
+}
+.textarea {
+  font-family: inherit;
+  min-height: 140px;
+  resize: vertical;
+  line-height: 1.5;
 }
 
 /* ── SearchSelect ── */

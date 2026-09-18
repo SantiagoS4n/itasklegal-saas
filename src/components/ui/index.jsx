@@ -38,6 +38,10 @@ export function Select({ className = '', children, ...props }) {
   return <select className={`${styles.select} ${className}`} {...props}>{children}</select>;
 }
 
+export function Textarea({ className = '', ...props }) {
+  return <textarea className={`${styles.textarea} ${className}`} {...props} />;
+}
+
 /**
  * Dropdown con búsqueda por texto, para listas largas donde un <select>
  * nativo se vuelve incómodo de recorrer (ej. asignar a un asistente).

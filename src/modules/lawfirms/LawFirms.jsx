@@ -12,7 +12,7 @@ import { dirtyStore } from '@/context/DirtyContext';
 import { exportToCSV } from '@/utils/exportCSV';
 import styles from './LawFirms.module.css';
 
-const EMPTY = { firm_name: '', contact_name: '', firm_phone: '', email: '', address: '', notes: '' };
+const EMPTY = { firm_name: '', contact_name: '', firm_phone: '', email: '', address: '', notes: '', billing_anchor_day: '' };
 
 const mark = r => { r.querySelector('.' + tableStyles.saveBtn)?.classList.add(tableStyles.dirty); dirtyStore.add('firm-' + r.dataset.id); };
 
@@ -42,6 +42,7 @@ export function LawFirms() {
       payload[el.dataset.field] = el.innerText.trim();
     });
     if (!payload.firm_name) { toast('⚠️ Firm Name is required', 'warning'); return; }
+    payload.billing_anchor_day = payload.billing_anchor_day ? parseInt(payload.billing_anchor_day, 10) || null : null;
     btn.classList.remove(tableStyles.dirty); btn.textContent = '…';
     const { error } = await supabase.from('law_firm').update(payload).eq('ID_number', id);
     if (error) { toast('❌ ' + error.message, 'error'); btn.textContent = 'Save'; return; }
@@ -69,6 +70,7 @@ export function LawFirms() {
               { key: 'email', label: 'Email' },
               { key: 'address', label: 'Address' },
               { key: 'notes', label: 'Notes' },
+              { key: 'billing_anchor_day', label: 'Billing Anchor Day' },
             ],
             'law_firms'
           )}>
@@ -88,12 +90,13 @@ export function LawFirms() {
               <SortableTh sortKey="email"        icon={icon} onToggle={toggle}>Email</SortableTh>
               <SortableTh sortKey="address"      icon={icon} onToggle={toggle}>Address</SortableTh>
               <SortableTh sortKey="notes"        icon={icon} onToggle={toggle}>Notes</SortableTh>
+              <SortableTh sortKey="billing_anchor_day" icon={icon} onToggle={toggle}>Billing Day</SortableTh>
               <th className={tableStyles.actCol}></th>
             </tr>
           </thead>
           <tbody>
-            {loading && <TableSkeleton rows={8} cols={7} />}
-            {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={7}>No law firms yet.</td></tr>}
+            {loading && <TableSkeleton rows={8} cols={8} />}
+            {!loading && sorted.length === 0 && <tr className={tableStyles.stateRow}><td colSpan={8}>No law firms yet.</td></tr>}
             {!loading && pagination.paginated.map(f => (
               <tr key={f.ID_number} data-id={f.ID_number}>
                 <td className={tableStyles.stickyCol}>
@@ -104,6 +107,7 @@ export function LawFirms() {
                 <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="email" onInput={e => mark(e.target.closest('tr'))}>{f.email||''}</div></td>
                 <td><div className={`${tableStyles.editable} ${tableStyles.wide}`} contentEditable suppressContentEditableWarning data-field="address" onInput={e => mark(e.target.closest('tr'))}>{f.address||''}</div></td>
                 <td><div className={`${tableStyles.editable} ${tableStyles.wide}`} contentEditable suppressContentEditableWarning data-field="notes" onInput={e => mark(e.target.closest('tr'))}>{f.notes||''}</div></td>
+                <td><div className={tableStyles.editable} contentEditable suppressContentEditableWarning data-field="billing_anchor_day" onInput={e => mark(e.target.closest('tr'))}>{f.billing_anchor_day ?? ''}</div></td>
                 <td className={tableStyles.actCol}>
                   <button className={tableStyles.saveBtn} onClick={e => handleSave(e.currentTarget, e.currentTarget.closest('tr'))}>Save</button>
                 </td>
@@ -133,7 +137,8 @@ export function LawFirmModal({ open, initial, onClose, onSaved }) {
       firm_phone: initial.firm_phone||'',
       email: initial.email||'',
       address: initial.address||'',
-      notes: initial.notes||''
+      notes: initial.notes||'',
+      billing_anchor_day: initial.billing_anchor_day ?? ''
     } : EMPTY);
   }, [initial, open]);
 
@@ -141,10 +146,14 @@ export function LawFirmModal({ open, initial, onClose, onSaved }) {
 
   const submit = async () => {
     if (!form.firm_name.trim()) { toast('⚠️ Firm Name is required', 'warning'); return; }
+    if (form.billing_anchor_day && (form.billing_anchor_day < 1 || form.billing_anchor_day > 31)) {
+      toast('⚠️ Billing Anchor Day must be between 1 and 31', 'warning'); return;
+    }
     setSaving(true);
+    const payload = { ...form, billing_anchor_day: form.billing_anchor_day ? parseInt(form.billing_anchor_day, 10) : null };
     const { data, error } = isEdit
-      ? await supabase.from('law_firm').update(form).eq('ID_number', initial.ID_number).select().single()
-      : await supabase.from('law_firm').insert(form).select().single();
+      ? await supabase.from('law_firm').update(payload).eq('ID_number', initial.ID_number).select().single()
+      : await supabase.from('law_firm').insert(payload).select().single();
     setSaving(false);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
     toast(isEdit ? '✓ Firm updated' : '✓ Firm created');
@@ -160,6 +169,7 @@ export function LawFirmModal({ open, initial, onClose, onSaved }) {
         <Field label="Email"><Input type="email" value={form.email} onChange={set('email')} placeholder="contact@firm.com" /></Field>
         <Field label="Address" className="full"><Input value={form.address} onChange={set('address')} placeholder="123 Main St" /></Field>
         <Field label="Notes" className="full"><Input value={form.notes} onChange={set('notes')} placeholder="Additional notes…" /></Field>
+        <Field label="Billing Anchor Day"><Input type="number" min={1} max={31} value={form.billing_anchor_day} onChange={set('billing_anchor_day')} placeholder="15" /></Field>
       </ModalGrid>
       <ModalActions>
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
