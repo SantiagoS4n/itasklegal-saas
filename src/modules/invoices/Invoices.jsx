@@ -40,8 +40,8 @@ export function Invoices() {
   const [filter,   setFilter]   = useState('all');
   const [monthFilter, setMonthFilter] = useState('');
   const [sort,     setSort]     = useState({ key: 'invoice_date', dir: 'desc' });
-  const [savingId, setSavingId] = useState(null); // invoice_number que se está guardando (feedback visual)
-  const [pdfLoadingId, setPdfLoadingId] = useState(null); // invoice_number cuyo PDF se está firmando
+  const [savingId, setSavingId] = useState(null); // rowKey (firm_id-invoice_number) que se está guardando (feedback visual)
+  const [pdfLoadingId, setPdfLoadingId] = useState(null); // rowKey cuyo PDF se está firmando
 
   const load = async () => {
     setLoading(true);
@@ -60,17 +60,21 @@ export function Invoices() {
   useEffect(() => { load(); }, []);
 
   // Autosave: se dispara al cambiar el select de Status. Solo ese campo se actualiza.
-  const handleStatusChange = async (invoiceNumber, newStatus) => {
-    setSavingId(invoiceNumber);
+  // invoice_number ya no es único globalmente (PK compuesta firm_id + invoice_number), así que
+  // hay que filtrar por ambos campos.
+  const handleStatusChange = async (firmId, invoiceNumber, newStatus) => {
+    const rowKey = `${firmId}-${invoiceNumber}`;
+    setSavingId(rowKey);
     const { error } = await supabase
       .from('invoice')
       .update({ status: newStatus })
+      .eq('firm_id', firmId)
       .eq('invoice_number', invoiceNumber);
     setSavingId(null);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
     toast('✓ Status updated');
     setInvoices(prev => prev.map(inv =>
-      String(inv.invoice_number) === String(invoiceNumber)
+      inv.firm_id === firmId && inv.invoice_number === invoiceNumber
         ? { ...inv, status: newStatus }
         : inv
     ));
@@ -78,9 +82,9 @@ export function Invoices() {
 
   // El bucket "invoice" es privado: no existe URL permanente.
   // Se genera una signed URL de 5 minutos en el momento del clic.
-  const openPdf = async (invoiceNumber, path) => {
+  const openPdf = async (rowKey, path) => {
     if (!path) { toast('⚠️ This invoice has no PDF yet', 'warning'); return; }
-    setPdfLoadingId(invoiceNumber);
+    setPdfLoadingId(rowKey);
     const { data, error } = await supabase
       .storage
       .from('invoice')
@@ -90,9 +94,13 @@ export function Invoices() {
     window.open(data.signedUrl, '_blank', 'noopener');
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm(`Delete invoice #${id}?`)) return;
-    const { error } = await supabase.from('invoice').delete().eq('invoice_number', id);
+  const handleDelete = async (firmId, invoiceNumber) => {
+    if (!confirm(`Delete invoice #${invoiceNumber}?`)) return;
+    const { error } = await supabase
+      .from('invoice')
+      .delete()
+      .eq('firm_id', firmId)
+      .eq('invoice_number', invoiceNumber);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
     toast('✓ Invoice deleted');
     load();
@@ -253,8 +261,10 @@ export function Invoices() {
                 <td colSpan={9}>No invoices found.</td>
               </tr>
             )}
-            {!loading && pagination.paginated.map(inv => (
-              <tr key={inv.invoice_number} data-id={inv.invoice_number}>
+            {!loading && pagination.paginated.map(inv => {
+              const rowKey = `${inv.firm_id}-${inv.invoice_number}`;
+              return (
+              <tr key={rowKey} data-firm-id={inv.firm_id} data-invoice-number={inv.invoice_number}>
                 <td className={tableStyles.stickyCol}>
                   {inv.invoice_number}
                 </td>
@@ -270,8 +280,8 @@ export function Invoices() {
                   <select
                     className={`${tableStyles.selInput} ${ESTADO_CLASS[inv.status] || ''}`}
                     value={inv.status || 'pending'}
-                    disabled={savingId === inv.invoice_number}
-                    onChange={e => handleStatusChange(inv.invoice_number, e.target.value)}>
+                    disabled={savingId === rowKey}
+                    onChange={e => handleStatusChange(inv.firm_id, inv.invoice_number, e.target.value)}>
                     <option value="pending">Pending</option>
                     <option value="paid">Paid</option>
                     <option value="overdue">Overdue</option>
@@ -292,24 +302,25 @@ export function Invoices() {
                   {inv.pdf_path
                     ? <button
                         className={tableStyles.linkCell}
-                        disabled={pdfLoadingId === inv.invoice_number}
+                        disabled={pdfLoadingId === rowKey}
                         style={{
                           background: 'none',
                           border: 'none',
                           padding: 0,
                           font: 'inherit',
                           color: 'inherit',
-                          cursor: pdfLoadingId === inv.invoice_number ? 'wait' : 'pointer',
+                          cursor: pdfLoadingId === rowKey ? 'wait' : 'pointer',
                         }}
-                        onClick={() => openPdf(inv.invoice_number, inv.pdf_path)}>
-                        {pdfLoadingId === inv.invoice_number ? '…' : '⬇ PDF'}
+                        onClick={() => openPdf(rowKey, inv.pdf_path)}>
+                        {pdfLoadingId === rowKey ? '…' : '⬇ PDF'}
                       </button>
                     : <span className={tableStyles.noLink}>—</span>}
                 </td>
 
                 <td className={tableStyles.actCol}></td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -449,7 +460,9 @@ function InvoiceModal({ open, initial, firms, onClose, onSaved }) {
       status:         form.status,
     };
     const { error } = initial
-      ? await supabase.from('invoice').update(payload).eq('invoice_number', initial.invoice_number)
+      ? await supabase.from('invoice').update(payload)
+          .eq('firm_id', initial.firm_id)
+          .eq('invoice_number', initial.invoice_number)
       : await supabase.from('invoice').insert(payload);
     setSaving(false);
     if (error) { toast('❌ ' + error.message, 'error'); return; }
